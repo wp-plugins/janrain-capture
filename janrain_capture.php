@@ -26,6 +26,7 @@ if (!class_exists('JanrainCapture')) {
       $this->url = WP_PLUGIN_URL.'/'.$this->name;
 
       require_once $this->path . '/janrain_capture_api.php';
+      require_once $this->path . '/janrain_capture_ui.php';
 
       if (is_admin()) {
         require_once $this->path . '/janrain_capture_admin.php';
@@ -35,6 +36,8 @@ if (!class_exists('JanrainCapture')) {
         add_action('wp_ajax_janrain_capture_redirect_uri', array($this, 'redirect_uri'));
         add_action('wp_ajax_nopriv_janrain_capture_redirect_uri', array($this, 'redirect_uri'));
       }
+      
+      $ui = new JanrainCaptureUi();
     }
 
     public function redirect_uri() {
