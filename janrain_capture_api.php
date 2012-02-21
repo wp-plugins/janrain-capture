@@ -34,13 +34,12 @@ class JanrainCaptureAPI {
 
     $url = "https://" . $this->capture_addr . "/$command";
 
-    $headers = array(
-      'Content-Type' => 'application/json'
-    );
+    $headers = array();
     if (isset($access_token))
       $headers['Authorization'] = "OAuth $access_token";
 
     if (isset($arg_array)) {
+      $headers['Content-Type'] = 'application/x-www-form-urlencoded';
       $arg_array = array_merge($arg_array, $this->args);
       $result = wp_remote_post($url, array(
         'method' => 'POST',
@@ -85,12 +84,12 @@ class JanrainCaptureAPI {
 
     $json_data = $this->call($command, $arg_array);
     if ($json_data) {
-      return true;
+      return $json_data;
     }
 
     return false;
   }
-  
+
   function refresh_access_token($refresh_token) {
     $command = "oauth/token";
     $arg_array = array('refresh_token' => $refresh_token,
@@ -106,39 +105,8 @@ class JanrainCaptureAPI {
     return false;
   }
 
-  public function load_user_entity($can_refresh = true) {
-    $current_user = wp_get_current_user();
-    if (!$current_user->ID
-      || !$current_user->janrain_capture_access_token
-      || !$current_user->janrain_capture_refresh_token
-      || !$current_user->janrain_capture_expires) {
-      return null;
-    }
-
-    $user_entity = null;
-
-    $need_to_refresh = false;
-
-    // Check if we need to refresh the access token
-    if (time() >= $current_user->janrain_capture_expires)
-      $need_to_refresh = true;
-    else {
-      $user_entity = $this->call('entity', array(), $current_user->janrain_capture_access_token);
-      if (isset($user_entity['code']) && $user_entity['code'] == '414')
-        $need_to_refresh = true;
-    }
-
-    // If necessary, refresh the access token and try to fetch the entity again.
-    if ($need_to_refresh) {
-      if ($can_refresh) {
-        if ($this->refresh_access_token($current_user->janrain_capture_refresh_token))
-          return $this->load_user_entity(false);
-        else
-          return null;
-      }
-    }
-
-    return $user_entity;
+  public function load_user_entity($access_token) {
+    return $this->call('entity', null, $access_token);
   }
 
 }
