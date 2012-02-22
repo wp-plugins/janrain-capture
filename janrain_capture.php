@@ -58,8 +58,23 @@ if (!class_exists('JanrainCapture')) {
         exit;
       }
     }
+    
+ 	function insert_signin_link() {
+ 	  $app_addr = 'https://' . get_option('janrain_capture_address') . '/oauth/signin' . '?';
+ 	  
+ 	  $args = array ( 'response_type'   => 'code',
+					  'redirect_uri'    => WP_PLUGIN_URL . "/janrain-capture/oauth_redirect.php",
+					  'client_id'       => get_option('janrain_capture_client_id'),
+					  'xd_receiver'     => WP_PLUGIN_URL . "/janrain-capture/xdcomm.html",
+					  'recover_password_callback' => 'CAPTURE.recoverPasswordCallback'); //optionally pass in callback
+ 	  
+ 	  $u = $app_addr . http_build_query($args);
+	  $link = '<a id="login_link" href="' . $u . '">Register / Sign In</a>';
+	  echo '<div id=login_div>' . $link . '</div>';
+	}
   }
 }
 
 $capture = new JanrainCapture;
 $capture->init();
+$capture->insert_signin_link();
