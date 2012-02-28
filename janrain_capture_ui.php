@@ -11,6 +11,7 @@ class JanrainCaptureUi {
 	function __construct() {
 		add_action('wp_head', array($this, 'registerPageHead'));
 		add_action('wp_enqueue_scripts', array($this, 'registerScripts'));
+//		add_action('wp_authenicate', array($this, 'doAuthentication'));
 	}
 	
 	function registerScripts() {

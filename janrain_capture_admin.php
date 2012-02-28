@@ -165,8 +165,8 @@ ENDSELECT;
   }
 
   public function onPost() {
-    if($_POST['janrain_capture_action']){
-      foreach($this->fields as $field){
+    if (isset($_POST['janrain_capture_action'])) {
+      foreach($this->fields as $field) {
         if (isset($_POST[$field['name']])) {
           $value = $_POST[$field['name']];
           if ($field['name'] == 'janrain_capture_address')
