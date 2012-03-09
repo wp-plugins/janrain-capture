@@ -10,12 +10,14 @@ class JanrainCaptureAPI {
 
   protected $args;
   protected $capture_addr;
+  private $name;
 
-  function __construct() {
+  function __construct($name) {
+    $this->name = $name;
     $this->args = array();
-    $this->args['client_id'] = get_option('janrain_capture_client_id');
-    $this->args['client_secret'] = get_option('janrain_capture_client_secret');
-    $this->capture_addr = get_option('janrain_capture_address');
+    $this->args['client_id'] = get_option($this->name . '_client_id');
+    $this->args['client_secret'] = get_option($this->name . '_client_secret');
+    $this->capture_addr = get_option($this->name . '_address');
   }
 
   /**
@@ -54,7 +56,7 @@ class JanrainCaptureAPI {
       ));
     }
 
-    if (!isset($result['body']))
+    if (is_wp_error($result) || !isset($result['body']))
       return false;
 
     $json_data = json_decode($result['body'], true);
@@ -82,12 +84,7 @@ class JanrainCaptureAPI {
       'grant_type' => 'authorization_code'
     );
 
-    $json_data = $this->call($command, $arg_array);
-    if ($json_data) {
-      return $json_data;
-    }
-
-    return false;
+    return $this->call($command, $arg_array);
   }
 
   function refresh_access_token($refresh_token) {
@@ -96,13 +93,7 @@ class JanrainCaptureAPI {
       'grant_type' => 'refresh_token'
     );
 
-    $json_data = $this->call($command, $arg_array);
-
-    if ($json_data) {
-      return true;
-    }
-
-    return false;
+    return $this->call($command, $arg_array);
   }
 
   public function load_user_entity($access_token) {

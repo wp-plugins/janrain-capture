@@ -10,12 +10,20 @@ class JanrainCaptureAdmin {
 
   private $postMessage;
   private $fields;
+  private $name;
 
-  function  __construct() {
+  function  __construct($name) {
+    $this->name = $name;
     $this->postMessage = array('class'=>'', 'message'=>'');
     $this->fields = array(
       array(
-        'name' => 'janrain_capture_address',
+        'name' => $this->name . '_main_options',
+        'title' => 'Main Options',
+        'type' => 'title',
+        'screen' => 'options'
+      ),
+      array(
+        'name' => $this->name . '_address',
         'title' => 'Application Domain',
         'description' => 'Your Capture application domain (e.g. demo.janraincapture.com)',
         'default' => '',
@@ -23,7 +31,7 @@ class JanrainCaptureAdmin {
         'screen' => 'options'
       ),
       array(
-        'name' => 'janrain_capture_client_id',
+        'name' => $this->name . '_client_id',
         'title' => 'API Client ID',
         'description' => 'Your Capture Client ID',
         'default' => '',
@@ -31,7 +39,7 @@ class JanrainCaptureAdmin {
         'screen' => 'options'
       ),
       array(
-        'name' => 'janrain_capture_client_secret',
+        'name' => $this->name . '_client_secret',
         'title' => 'API Client Secret',
         'description' => 'Your Capture Client Secret',
         'default' => '',
@@ -39,11 +47,41 @@ class JanrainCaptureAdmin {
         'screen' => 'options'
       ),
       array(
-        'name' => 'janrain_capture_sso_address',
+        'name' => $this->name . '_sso_address',
         'title' => 'SSO Application Domain',
         'description' => 'Your Jarain Federate SSO domain (e.g. demo.janrainsso.com)',
         'default' => '',
         'type' => 'text',
+        'screen' => 'options'
+      ),
+      array(
+        'name' => $this->name . 'backplane_settings',
+        'title' => 'Backplane Settings',
+        'type' => 'title',
+        'screen' => 'options'
+      ),
+      array(
+        'name' => $this->name . '_bp_server_base_url',
+        'title' => 'Server Base URL',
+        'description' => 'Your Backplane server URL',
+        'default' => '',
+        'type' => 'text',
+        'screen' => 'options'
+      ),
+      array(
+        'name' => $this->name . '_bp_bus_name',
+        'title' => 'Bus Name',
+        'description' => 'Your Backplane Bus Name',
+        'default' => '',
+        'type' => 'text',
+        'screen' => 'options'
+      ),
+      array(
+        'name' => $this->name . '_bp_js_path',
+        'title' => 'JS Path',
+        'description' => 'The path to backplane.js',
+        'default' => '',
+        'type' => 'long-text',
         'screen' => 'options'
       )
     );
@@ -51,9 +89,9 @@ class JanrainCaptureAdmin {
 
   function admin_menu() {
     $optionsPage = add_menu_page(__('Janrain Capture'), __('Janrain Capture'),
-      'manage_options', 'janrain_capture', array($this, 'options'));
-    $uiPage = add_submenu_page('janrain_capture', __('UI Options'), __('UI Options'),
-      'manage_options', 'janrain_capture_ui', array($this,'options_ui'));
+      'manage_options', $this->name, array($this, 'options'));
+    //$uiPage = add_submenu_page($this->name, __('UI Options'), __('UI Options'),
+      //'manage_options', $this->name . '_ui', array($this,'options_ui'));
 
     //add_action('admin_print_scripts-' . $regPage, array($this,'admin_reg_scripts'));
     //add_action('admin_print_styles-' . $regPage, array($this,'admin_reg_styles'));
@@ -82,7 +120,7 @@ class JanrainCaptureAdmin {
 </div>
 <div class="wrap">
   <h2>{$args->title}</h2>
-  <form method="post" id="janrain_capture_{$args->action}">
+  <form method="post" id="{$this->name}_{$args->action}">
     <table class="form-table">
       <tbody>
 HEADER;
@@ -96,7 +134,7 @@ HEADER;
       </tbody>
     </table>
     <p class="submit">
-      <input type="hidden" name="janrain_capture_action" value="{$args->action}" />
+      <input type="hidden" name="{$this->name}_action" value="{$args->action}" />
       <input type="submit" class="button-primary" value="Save Changes" />
     </p>
   </form>
@@ -113,7 +151,7 @@ FOOTER;
         <tr valign="top">
           <th scope="row">{$field['title']}</th>
           <td>
-            <input type="text" name="{$field['name']}" value="$value" style="width:150px" />
+            <input type="text" name="{$field['name']}" value="$value" style="width:200px" />
             <span class="description">{$field['description']}</span>
           </td>
         </tr>
@@ -161,15 +199,24 @@ SELECT;
         </tr>
 ENDSELECT;
         break;
+      case 'title':
+        echo <<<TITLE
+        <tr valign="top">
+          <td colspan="2">
+            <h2 class="title">{$field['title']}</h2>
+          </td>
+        </tr>
+TITLE;
+        break;
     }
   }
 
   public function onPost() {
-    if (isset($_POST['janrain_capture_action'])) {
+    if (isset($_POST[$this->name . '_action'])) {
       foreach($this->fields as $field) {
         if (isset($_POST[$field['name']])) {
           $value = $_POST[$field['name']];
-          if ($field['name'] == 'janrain_capture_address')
+          if ($field['name'] == $this->name . '_address')
             $value = preg_replace('/^https?\:\/\//i', '', $value);
           update_option($field['name'], $value);
         }
