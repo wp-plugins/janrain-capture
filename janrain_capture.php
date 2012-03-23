@@ -20,6 +20,9 @@ if (!class_exists('JanrainCapture')) {
     public $name;
     public $url;
 
+  /**
+   * Initializes the plugin.
+   */
     function init() {
       $this->path = dirname(__FILE__);
       $this->name = 'janrain_capture';
@@ -38,6 +41,8 @@ if (!class_exists('JanrainCapture')) {
         add_action('wp_ajax_nopriv_' . $this->name . '_redirect_uri', array(&$this, 'redirect_uri'));
         add_action('wp_ajax_' . $this->name . '_profile', array(&$this, 'profile'));
         add_action('wp_ajax_nopriv_' . $this->name . '_profile', array(&$this, 'profile'));
+        add_action('wp_ajax_' . $this->name . '_profile_update', array(&$this, 'profile_update'));
+        add_action('wp_ajax_nopriv_' . $this->name . '_profile_update', array(&$this, 'profile_update'));
         add_action('wp_ajax_' . $this->name . '_xdcomm', array(&$this, 'xdcomm'));
         add_action('wp_ajax_nopriv_' . $this->name . '_xdcomm', array(&$this, 'xdcomm'));
         add_action('wp_ajax_' . $this->name . '_refresh_token', array(&$this, 'refresh_token'));
@@ -46,60 +51,18 @@ if (!class_exists('JanrainCapture')) {
         add_action('wp_ajax_nopriv_' . $this->name . '_logout', array(&$this, 'logout'));
       } else {
         add_shortcode('janrain_capture', array(&$this, 'shortcode'));
-        add_action('wp_head', array(&$this, 'head'));
       }
 
       $ui = new JanrainCaptureUi($this->name);
     }
 
-    function head() {
-      $bp_js_path = get_option($this->name . '_bp_js_path');
-      $bp_server_base_url = get_option($this->name . '_bp_server_base_url');
-      $bp_bus_name = get_option($this->name . '_bp_bus_name');
-      $sso_addr = get_option($this->name . '_sso_address');
-      if ($bp_js_path)
-        echo '<script type="text/javascript" src="' . $bp_js_path . '"></script>';
-      if ($bp_server_base_url && $bp_bus_name)
-        echo <<<BACKPLANE
-<script type="text/javascript">
-(function(){
-  Backplane(CAPTURE.bp_ready);
-    Backplane.init({
-      serverBaseURL: "$bp_server_base_url",
-      busName: "$bp_bus_name"
-    });
-})();
-</script>
-BACKPLANE;
-      if ($sso_addr) {
-        $client_id = get_option($this->name . '_client_id');
-        $xdcomm = admin_url('admin-ajax.php') . '?action=' . $this->name . '_xdcomm';
-        $redirect_uri = admin_url('admin-ajax.php') . '?action=' . $this->name . '_redirect_uri';
-        $logout = admin_url('admin-ajax.php') . '?action=' . $this->name . '_logout';
-        echo <<<SSO
-<script type="text/javascript" src="https://$sso_addr/sso.js"></script>
-<script type="text/javascript">
-JANRAIN.SSO.CAPTURE.check_login({
-  sso_server: "https://$sso_addr",
-  client_id: "$client_id",
-  redirect_uri: "$redirect_uri",
-  logout_uri: "$logout",
-  xd_receiver: "$xdcomm"
-});
-function janrain_capture_logout() {
-  JANRAIN.SSO.CAPTURE.logout({
-    sso_server: "https://$sso_addr",
-    logout_uri: "$logout"
-  });
-}
-</script>
-SSO;
-      }
-      echo '<script type="text/javascript">if (typeof(ajaxurl) == "undefined") var ajaxurl = "' . admin_url('admin-ajax.php') . '";</script>';
-    }
-
+  /**
+   * Method used for the janrain_capture_redirect_uri action on admin-ajax.php.
+   */
     function redirect_uri() {
       $code = $_REQUEST['code'];
+      if (!ctype_alnum($code))
+        throw new Exception('Janrian Capture: received code was not valid');
       $origin = $_REQUEST['origin'];
       do_action($this->name . '_redirect_uri_start', $code, $origin);
       $redirect_args = array(
@@ -113,7 +76,18 @@ SSO;
       if (is_array($json_data) && $json_data['stat'] == 'ok' && $json_data['access_token']) {
         do_action($this->name . '_new_access_token', $json_data);
         $s = $_SERVER['HTTPS'] ? '; secure' : '';
-        $r = $origin ? $origin : '/';
+        $r = $origin ? esc_url($origin) : '/';
+        $d = (int) get_option($this->name . '_refresh_duration');
+        $user_attributes = get_option($this->name . '_user_attributes');
+        if ($user_attributes) {
+          $user_entity = $api->load_user_entity($json_data['access_token']);
+          if (is_array($user_entity) && $user_entity['stat'] == "ok") {
+            $user_entity = $user_entity['result'];
+            do_action($this->name . '_user_entity_loaded', $user_entity);
+          } else {
+            throw new Exception('Janrain Capture: Could not retrieve user entity');
+          }
+        }
         echo <<<REDIRECT
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
@@ -127,8 +101,22 @@ SSO;
       xdate.setSeconds(xdate.getSeconds()+{$json_data['expires_in']});
       document.cookie='{$this->name}_access_token={$json_data['access_token']}; expires='+xdate.toUTCString() + '; path=/$s';
       var ydate=new Date();
-      ydate.setDate(ydate.getDate()+30);
+      ydate.setDate(ydate.getDate()+$d);
       document.cookie='{$this->name}_refresh_token={$json_data['refresh_token']}; expires='+ydate.toUTCString() + '; path=/$s';
+      document.cookie='{$this->name}_expires='+ydate.toUTCString()+'; expires='+ydate.toUTCString() + '; path=/$s';
+REDIRECT;
+        if ($user_attributes && $user_entity) {
+          $attrs = explode(',', $user_attributes);
+          $cookie_vals = array('uuid' => $user_entity['uuid']);
+          foreach ($attrs as $a) {
+            $cookie_vals[$a] = $user_entity[$a];
+          }
+          $cookie_val = json_encode($cookie_vals);
+          echo "
+      document.cookie='{$this->name}_user_attrs=" . urlencode($cookie_val) . "; expires='+ydate.toUTCString() + '; path=/$s';
+";
+        }
+        echo <<<CLOSER
       if (window.self != window.parent)
         window.parent.CAPTURE.closeAuth();
       else
@@ -136,34 +124,28 @@ SSO;
     </script>
   </body>
 </html>
-REDIRECT;
-        die();
-        $user_entity = $api->load_user_entity($json_data['access_token']);
-        if (is_array($user_entity) && $user_entity['stat'] == "ok") {
-          $user_entity = $user_entity['result'];
-        } else {
-          throw new Exception('Janrain Capture: Could not retrieve user entity');
-        }
-
-        var_dump($user_entity);
-        exit;
-
+CLOSER;
         die();
       } else {
         throw new Exception('Janrain Capture: Could not retrieve access_token');
       }
     }
 
+  /**
+   * Method used for the janrain_capture_profile action on admin-ajax.php.
+   * This method prints javascript to retreive the access_token from a cookie and
+   * render the profile screen if a valid access_token is found.
+   */
     function profile() {
       $method = $_REQUEST['method'] ? $_REQUEST['method'] : '';
-      $args = array (
+      $args = array(
         'redirect_uri' => admin_url('admin-ajax.php') . '?action=' . $this->name . '_redirect_uri',
-        'client_id' => get_option($this->name . '_client_id'),
+        'client_id' => self::sanitize(get_option($this->name . '_client_id')),
         'xd_receiver' => admin_url('admin-ajax.php') . '?action=' . $this->name . '_xdcomm',
         'callback' => 'CAPTURE.closeProfile'
       );
       $capture_addr = get_option($this->name . '_ui_address') ? get_option($this->name . '_ui_address') : get_option($this->name . '_address');
-      $capture_addr = 'https://' . $capture_addr . "/oauth/profile{$method}?" . http_build_query($args, '', '&');
+      $capture_addr = 'https://' . self::sanitize($capture_addr) . '/oauth/profile' . self::sanitize($method) . '?' . http_build_query($args, '', '&');
       echo <<<REDIRECT
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
@@ -186,8 +168,44 @@ REDIRECT;
       die();
     }
 
+  /**
+   * Method used for the janrain_capture_profile_update action on admin-ajax.php.
+   * This method retrives a user record from Capture and updates the janrain_capture_user_attrs
+   * cookie accordingly.
+   */
+    function profile_update() {
+      $access_token = $_REQUEST['access_token'] ? $_REQUEST['access_token'] : '';
+      $api = new JanrainCaptureApi($this->name);
+      $user_attributes = get_option($this->name . '_user_attributes');
+      if ($user_attributes) {
+        $user_entity = $api->load_user_entity($access_token);
+        if (is_array($user_entity) && $user_entity['stat'] == "ok") {
+          $user_entity = $user_entity['result'];
+          do_action($this->name . '_user_entity_loaded', $user_entity);
+          $attrs = explode(',', $user_attributes);
+          $cookie_vals = array('uuid' => $user_entity['uuid']);
+          foreach ($attrs as $a) {
+            $cookie_vals[$a] = $user_entity[$a];
+          }
+          echo json_encode($cookie_vals);
+        } else {
+          throw new Exception('Janrain Capture: Could not retrieve user entity');
+        }
+      } else {
+        echo '-1';
+      }
+      die();
+    }
+
+  /**
+   * Method used for the janrain_capture_refresh_token action on admin-ajax.php.
+   * This method is an AJAX endpoint for issuing a request to refresh the Capture
+   * token set. The response is the JSON object returned by Capture.
+   */
     function refresh_token() {
       $refresh_token = $_REQUEST['refresh_token'];
+      if (!preg_match("/^[a-z0-9]+$/iD", $refresh_token))
+        throw new Exception('Janrain Capture: invalid refresh_token');
       $api = new JanrainCaptureApi($this->name);
       $json_data = $api->refresh_access_token($refresh_token);
       if (is_array($json_data) && $json_data['stat'] == 'ok' && $json_data['access_token']) {
@@ -198,6 +216,11 @@ REDIRECT;
       }
     }
 
+  /**
+   * Method used for the janrain_capture_logout action on admin-ajax.php.
+   * This method is used to destroy any Capture cookies associated with the current
+   * session.
+   */
     function logout() {
       echo <<<LOGOUT
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
@@ -208,11 +231,14 @@ REDIRECT;
   </head>
   <body>
     <script type="text/javascript">
-      document.cookie = 'janrain_capture_access_token=; expires=Thu, 01-Jan-70 00:00:01 GMT;';
-      document.cookie = 'janrain_capture_refresh_token=; expires=Thu, 01-Jan-70 00:00:01 GMT;';
+      document.cookie = '{$this->name}_access_token=; expires=Thu, 01-Jan-70 00:00:01 GMT; path=/';
+      document.cookie = '{$this->name}_refresh_token=; expires=Thu, 01-Jan-70 00:00:01 GMT; path=/';
+      document.cookie = '{$this->name}_user_attrs=; expires=Thu, 01-Jan-70 00:00:01 GMT; path=/';
       if (window.parent != window.self) {
-        if (typeof(window.parent.janrain_capture_on_logout) == 'function')
-          window.parent.janrain_capture_on_logout();
+        if (typeof(window.parent.Backplane) != 'undefined')
+          document.cookie = 'backplane-channel=; expires=Thu, 01-Jan-70 00:00:01 GMT; path=/';
+        if (typeof(window.parent.{$this->name}_on_logout) == 'function')
+          window.parent.{$this->name}_on_logout();
       } else {
         window.location.redirect = '/';
       }
@@ -220,8 +246,14 @@ REDIRECT;
   </body>
 </html>
 LOGOUT;
+      die();
     }
 
+  /**
+   * Method used for the janrain_capture_xdcomm action on admin-ajax.php.
+   * This method is rendered to allow for cross-domain communication between Capture
+   * iframes and the parent.
+   */
     function xdcomm() {
       echo <<<XDCOMM
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
@@ -241,6 +273,15 @@ XDCOMM;
       die();
     }
 
+  /**
+   * Implementation of the janrain_capture shortcode.
+   *
+   * @param string $args
+   *   Arguments appended to the shortcode
+   *
+   * @return string
+   *   Text or HTML to render in place of the shortcode
+   */
     function shortcode($args) {
       extract(shortcode_atts(array(
         'type' => 'modal',
@@ -250,6 +291,7 @@ XDCOMM;
         'width' => '700',
         'href_only' => 'false'
       ), $args));
+      $class = 'capture-anon';
       $capture_addr = get_option($this->name . '_ui_address') ? get_option($this->name . '_ui_address') : get_option($this->name . '_address');
       if (strpos($action, 'profile') === 0) {
         $uargs = array('action' => $this->name . '_profile');
@@ -258,6 +300,7 @@ XDCOMM;
           $uargs['method'] = urlencode($method);
         }
         $link = admin_url('admin-ajax.php') . '?' . http_build_query($uargs, '', '&');
+        $class = 'capture-auth';
       }
       else {
         $link = 'https://' . $capture_addr . '/oauth/' . $action;
@@ -271,17 +314,31 @@ XDCOMM;
         $link = $link . '?' . http_build_query($args, '', '&');
       }
       if ($href_only == 'true')
-        return $link;
+        return esc_url($link);
       if ($type == 'inline') {
-        $iframe = '<iframe src="' . $link . '" style="width:' . $width . 'px;height:' . $height . 'px;" class="' . $this->name . '_iframe"></iframe>';
+        $iframe = '<iframe src="' . esc_url($link) . '" style="width:' . (int) $width . 'px;height:' . (int) $height . 'px;" class="' . $this->name . '_iframe ' . $class . ' ' . $this->name . '_' . self::sanitize($action) . '"></iframe>';
         return $iframe;
       } else {
-        $anchor = '<a href="' . $link . '" rel="width:' . $width . 'px;height:' . $height . 'px;" class="' . $this->name . '_anchor modal-link">' . $text . '</a>';
+        $anchor = '<a href="' . esc_url($link) . '" rel="width:' . (int) $width . 'px;height:' . (int) $height . 'px;" class="' . $this->name . '_anchor modal-link ' . $class . ' ' . $this->name . '_' . self::sanitize($action) . '">' . $text . '</a>';
         return $anchor;
       }
+    }
+
+  /**
+   * Sanitization method to remove special chars
+   *
+   * @param string $s
+   *   String to be sanitized
+   *
+   * @return string
+   *   Sanitized string
+   */   
+    static function sanitize($s) {
+      return preg_replace("/[^a-z0-9\._-]+/i", '', $s);
     }
   }
 }
 
 $capture = new JanrainCapture;
 $capture->init();
+

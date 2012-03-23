@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @file
+ * @package Janrain Capture
  *
  * Admin interface for plugin options
  *
@@ -12,6 +12,12 @@ class JanrainCaptureAdmin {
   private $fields;
   private $name;
 
+  /**
+   * Initializes plugin name, builds array of fields to render.
+   *
+   * @param string $name
+   *   The plugin name to use as a namespace
+   */
   function  __construct($name) {
     $this->name = $name;
     $this->postMessage = array('class'=>'', 'message'=>'');
@@ -28,7 +34,8 @@ class JanrainCaptureAdmin {
         'description' => 'Your Capture application domain (e.g. demo.janraincapture.com)',
         'default' => '',
         'type' => 'text',
-        'screen' => 'options'
+        'screen' => 'options',
+        'validate' => '/[^a-z0-9\._-]+/i'
       ),
       array(
         'name' => $this->name . '_client_id',
@@ -36,7 +43,8 @@ class JanrainCaptureAdmin {
         'description' => 'Your Capture Client ID',
         'default' => '',
         'type' => 'text',
-        'screen' => 'options'
+        'screen' => 'options',
+        'validate' => '/[^a-z0-9]+/i'
       ),
       array(
         'name' => $this->name . '_client_secret',
@@ -44,7 +52,8 @@ class JanrainCaptureAdmin {
         'description' => 'Your Capture Client Secret',
         'default' => '',
         'type' => 'text',
-        'screen' => 'options'
+        'screen' => 'options',
+        'validate' => '/[^a-z0-9]+/i'
       ),
       array(
         'name' => $this->name . '_sso_address',
@@ -52,10 +61,11 @@ class JanrainCaptureAdmin {
         'description' => 'Your Jarain Federate SSO domain (e.g. demo.janrainsso.com)',
         'default' => '',
         'type' => 'text',
-        'screen' => 'options'
+        'screen' => 'options',
+        'validate' => '/[^a-z0-9\._-]+/i'
       ),
       array(
-        'name' => $this->name . 'backplane_settings',
+        'name' => $this->name . '_backplane_settings',
         'title' => 'Backplane Settings',
         'type' => 'title',
         'screen' => 'options'
@@ -66,7 +76,8 @@ class JanrainCaptureAdmin {
         'description' => 'Your Backplane server URL',
         'default' => '',
         'type' => 'text',
-        'screen' => 'options'
+        'screen' => 'options',
+        'validate' => '/[^a-z0-9\.:\/\&\?\=\%]+/i'
       ),
       array(
         'name' => $this->name . '_bp_bus_name',
@@ -74,7 +85,8 @@ class JanrainCaptureAdmin {
         'description' => 'Your Backplane Bus Name',
         'default' => '',
         'type' => 'text',
-        'screen' => 'options'
+        'screen' => 'options',
+        'validate' => '/[^a-z0-9\._-]+/i'
       ),
       array(
         'name' => $this->name . '_bp_js_path',
@@ -82,21 +94,47 @@ class JanrainCaptureAdmin {
         'description' => 'The path to backplane.js',
         'default' => '',
         'type' => 'long-text',
+        'screen' => 'options',
+        'validate' => '/[^a-z0-9\.:\/\&\?\=\%]+/i'
+      ),
+      array(
+        'name' => $this->name . '_user_options',
+        'title' => 'User Options',
+        'type' => 'title',
         'screen' => 'options'
+      ),
+      array(
+        'name' => $this->name . '_refresh_duration',
+        'title' => 'Refresh Cookie Expiration',
+        'description' => 'The number of days before the refresh token and user attribute cookies expire',
+        'default' => '10',
+        'type' => 'text',
+        'screen' => 'options',
+        'validate' => '/[^0-9\.]+/i'
+      ),
+      array(
+        'name' => $this->name . '_user_attributes',
+        'title' => 'User Attributes',
+        'description' => 'Comma-separated list of user attributes to store in the janrain_capture_user_attrs cookie',
+        'default' => '',
+        'type' => 'long-text',
+        'screen' => 'options',
+        'validate' => '/[^a-z0-9\.\_\-\,]+/i'
       )
     );
   }
 
+  /**
+   * Method bound to the admin_menu action.
+   */
   function admin_menu() {
     $optionsPage = add_menu_page(__('Janrain Capture'), __('Janrain Capture'),
       'manage_options', $this->name, array($this, 'options'));
-    //$uiPage = add_submenu_page($this->name, __('UI Options'), __('UI Options'),
-      //'manage_options', $this->name . '_ui', array($this,'options_ui'));
-
-    //add_action('admin_print_scripts-' . $regPage, array($this,'admin_reg_scripts'));
-    //add_action('admin_print_styles-' . $regPage, array($this,'admin_reg_styles'));
   }
 
+  /**
+   * Method bound to the Janrain Capture options menu.
+   */
   function options() {
     $args = new stdClass;
     $args->title = 'Janrain Capture Options';
@@ -104,13 +142,12 @@ class JanrainCaptureAdmin {
     $this->printAdmin($args);
   }
 
-  function options_ui() {
-    $args = new stdClass;
-    $args->title = 'Janrain Capture UI Options';
-    $args->action = 'options_ui';
-    $this->printAdmin($args);
-  }
-
+  /**
+   * Method to print the admin page markup.
+   *
+   * @param stdClass $args
+   *   Object with page title and action variables
+   */
   function printAdmin($args) {
     echo <<<HEADER
 <div id="message" class="{$this->postMessage['class']} fade">
@@ -142,6 +179,12 @@ HEADER;
 FOOTER;
   }
 
+  /**
+   * Method to print field-level markup.
+   *
+   * @param array $field
+   *   A structured field definition with strings used in generating markup.
+   */
   function printField($field) {
     $value = get_option($field['name']);
     $value = $value ? $value : $field['default'];
@@ -211,13 +254,18 @@ TITLE;
     }
   }
 
+  /**
+   * Method to receive and store submitted options when posted.
+   */
   public function onPost() {
     if (isset($_POST[$this->name . '_action'])) {
       foreach($this->fields as $field) {
         if (isset($_POST[$field['name']])) {
           $value = $_POST[$field['name']];
-          if ($field['name'] == $this->name . '_address')
+          if ($field['name'] == $this->name . '_address' || $field['name'] == $this->name . '_sso_address')
             $value = preg_replace('/^https?\:\/\//i', '', $value);
+          if ($field['validate'])
+            $value = preg_replace($field['validate'], '', $value);
           update_option($field['name'], $value);
         }
       }
@@ -226,3 +274,4 @@ TITLE;
   }
 
 }
+

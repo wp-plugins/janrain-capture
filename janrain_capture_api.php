@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @file
+ * @package Janrain Capture
  *
  * API Client for making calls to the Janrain Capture web service
  *
@@ -12,6 +12,12 @@ class JanrainCaptureAPI {
   protected $capture_addr;
   private $name;
 
+  /**
+   * Gets settings, initializes plugin name.
+   *
+   * @param string $name
+   *   The plugin name to use as a namespace
+   */
   function __construct($name) {
     $this->name = $name;
     $this->args = array();
@@ -29,7 +35,7 @@ class JanrainCaptureAPI {
    *   The data set to pass via POST
    * @param string $access_token
    *   The client access token to use when performing user-specific calls
-   * @return
+   * @return mixed
    *   The HTTP request result data
    */
   protected function call($command, $arg_array = null, $access_token = null) {
@@ -87,6 +93,14 @@ class JanrainCaptureAPI {
     return $this->call($command, $arg_array);
   }
 
+  /**
+   * Fetches a new token set. Used when access_token expires.
+   *
+   * @param string $refresh_token
+   *   A valid Capture refresh token
+   * @return mixed
+   *   The HTTP request response
+   */
   function refresh_access_token($refresh_token) {
     $command = "oauth/token";
     $arg_array = array('refresh_token' => $refresh_token,
@@ -96,8 +110,17 @@ class JanrainCaptureAPI {
     return $this->call($command, $arg_array);
   }
 
+  /**
+   * Fetches the user entity.
+   *
+   * @param string $access_token
+   *   A valid Capture access token
+   * @return mixed
+   *   The HTTP request response
+   */
   public function load_user_entity($access_token) {
     return $this->call('entity', null, $access_token);
   }
 
 }
+
