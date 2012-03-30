@@ -96,32 +96,11 @@ class JanrainCaptureAdmin {
         'type' => 'long-text',
         'screen' => 'options',
         'validate' => '/[^a-z0-9\.:\/\&\?\=\%]+/i'
-      ),
-      array(
-        'name' => $this->name . '_user_options',
-        'title' => 'User Options',
-        'type' => 'title',
-        'screen' => 'options'
-      ),
-      array(
-        'name' => $this->name . '_refresh_duration',
-        'title' => 'Refresh Cookie Expiration',
-        'description' => 'The number of days before the refresh token and user attribute cookies expire',
-        'default' => '10',
-        'type' => 'text',
-        'screen' => 'options',
-        'validate' => '/[^0-9\.]+/i'
-      ),
-      array(
-        'name' => $this->name . '_user_attributes',
-        'title' => 'User Attributes',
-        'description' => 'Comma-separated list of user attributes to store in the janrain_capture_user_attrs cookie',
-        'default' => '',
-        'type' => 'long-text',
-        'screen' => 'options',
-        'validate' => '/[^a-z0-9\.\_\-\,]+/i'
       )
     );
+
+    $this->onPost();
+    add_action('admin_menu', array(&$this,'admin_menu'));
   }
 
   /**
