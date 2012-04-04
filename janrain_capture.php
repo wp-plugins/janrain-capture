@@ -6,7 +6,7 @@
 Plugin Name: Janrain Capture
 Plugin URI: http://www.janrain.com/
 Description: Collect, store and leverage user profile data from social networks in a flexible, lightweight hosted database.
-Version: 0.0.1
+Version: 0.0.2
 Author: Janrain
 Author URI: http://www.janrain.com/
 License: Apache License, Version 2.0
@@ -23,12 +23,12 @@ if (!class_exists('JanrainCapture')) {
    * Initializes the plugin.
    */
     function init() {
-      $this->path = dirname(__FILE__);
+      $this->path = plugin_dir_path(__FILE__);
       $this->name = 'janrain_capture';
       $this->url = WP_PLUGIN_URL.'/janrain-capture';
 
+      register_activation_hook(__FILE__, array(&$this, 'activate'));
       require_once $this->path . '/janrain_capture_api.php';
-      require_once $this->path . '/janrain_capture_ui.php';
 
       if (is_admin()) {
         require_once $this->path . '/janrain_capture_admin.php';
@@ -47,8 +47,19 @@ if (!class_exists('JanrainCapture')) {
       } else {
         add_shortcode($this->name, array(&$this, 'shortcode'));
       }
+      if (get_option($this->name . '_ui_enabled') != '0') {
+        require_once $this->path . '/janrain_capture_ui.php';
+        $ui = new JanrainCaptureUi($this->name);
+      }
+    }
 
-      $ui = new JanrainCaptureUi($this->name);
+  /**
+   * Method bound to register_activation_hook.
+   */
+    function activate() {
+      require_once plugin_dir_path(__FILE__) . '/janrain_capture_admin.php';
+      $admin = new JanrainCaptureAdmin($this->name);
+      $admin->activate();
     }
 
   /**
@@ -74,16 +85,29 @@ if (!class_exists('JanrainCapture')) {
           do_action($this->name . '_user_entity_loaded', $user_entity);
           // Lookup user based on returned uuid
           $exists = get_users(array('blog_id'=>$GLOBALS['blog_id'], 'meta_key' => $this->name . '_uuid', 'meta_value' => $user_entity['uuid']));
-          // TODO: username_exists($user_entity['displayName']);
           if (count($exists)<1) {
-            $random_password = wp_generate_password($length=12, $include_standard_special_chars=false);
-            $user_id = wp_create_user($user_entity['displayName'], $random_password, $user_entity['email']);
-            if (!add_user_meta($user_id, $this->name . '_uuid', $user_entity['uuid'], true)) {
+            $user_attrs = array();
+            $user_attrs['user_pass'] = wp_generate_password($length=12, $include_standard_special_chars=false);
+            if (get_option($this->name . '_user_email'))
+              $user_attrs['user_email'] = esc_sql($this->get_field(get_option($this->name . '_user_email'), $user_entity));
+            if (get_option($this->name . '_user_login'))
+              $user_attrs['user_login'] = esc_sql($this->get_field(get_option($this->name . '_user_login'), $user_entity));
+            if (get_option($this->name . '_user_nicename'))
+              $user_attrs['user_nicename'] = esc_sql($this->get_field(get_option($this->name . '_user_nicename'), $user_entity));
+            if (get_option($this->name . '_user_display_name'))
+              $user_attrs['display_name'] = esc_sql($this->get_field(get_option($this->name . '_user_display_name'), $user_entity));
+            $user_id = wp_insert_user($user_attrs);
+            if (!$user_id)
+              throw new Exception('Janrain Capture: Failed to create new user');
+            if (!add_user_meta($user_id, $this->name . '_uuid', $user_entity['uuid'], true))
               throw new Exception('Janrain Capture: Failed to set uuid on new user');
-            }
+            if (!$this->update_user_data($user_id, $user_entity, true))
+              throw new Exception('Janrain Capture: Failed to update user data');
           } else {
             $user = $exists[0];
             $user_id = $user->ID;
+            if (!$this->update_user_data($user_id, $user_entity))
+              throw new Exception('Janrain Capture: Failed to update user data');
           }
           if (!$api->update_user_meta($user_id))
             throw new Exception('Janrain Capture: Failed to update user meta');
@@ -159,30 +183,88 @@ REDIRECT;
    * cookie accordingly.
    */
     function profile_update() {
+      $current_user = wp_get_current_user();
+      if (!$current_user->ID)
+        throw new Exception('Janrain Capture: Must be logged in to update profile');
+
+      $user_id = $current_user->ID;
       $api = new JanrainCaptureApi($this->name);
       $user_entity = $api->load_user_entity();
       if (is_array($user_entity)) {
-        if (!$api->update_user_meta())
+        if (!$api->update_user_meta($user_id))
           throw new Exception('Janrain Capture: Failed to update user meta');
         $user_entity = $user_entity['result'];
         do_action($this->name . '_user_entity_loaded', $user_entity);
-        $exists = get_users(array('blog_id'=>$GLOBALS['blog_id'], 'meta_key' => $this->name . '_uuid', 'meta_value' => $user_entity['uuid']));
-        if (count($exists)>0) {
-          $user = $exists[0];
-          wp_update_user(array(
-            'ID' => $user->ID,
-            'user_nicename' => $user_entity['displayName'],
-            'display_name' => $user_entity['displayName'],
-            'user_email' => $user_entity['email']
-          ));
-        } else {
-          throw new Exception('Janrain Capture: Could not update - user does not exist');
-        }
+        if (!$this->update_user_data($user_id, $user_entity))
+          throw new Exception('Janrain Capture: Failed to update user data');
       } else {
         throw new Exception('Janrain Capture: Could not retrieve user entity');
       }
       echo '1';
       die();
+    }
+
+  /**
+   * Method used for updating user data with returned Capture user data
+   *
+   * @param int $user_id
+   *   The ID of the user to update
+   * @param array $user_entity
+   *   The user entity returned from Capture
+   * @return boolean
+   *   Success or failure
+   */
+    function update_user_data($user_id, $user_entity, $meta_only=false) {
+      if (!$user_id || !is_array($user_entity))
+        throw new Exception('Janrain Capture: Not a valid User ID or User Entity');
+
+      $results = array();
+      if ($meta_only !== true) {
+        $user_attrs = array('ID' => $user_id);
+        if (get_option($this->name . '_user_email'))
+          $user_attrs['user_email'] = esc_sql($this->get_field(get_option($this->name . '_user_email'), $user_entity));
+        if (get_option($this->name . '_user_nicename'))
+          $user_attrs['user_nicename'] = esc_sql($this->get_field(get_option($this->name . '_user_nicename'), $user_entity));
+        if (get_option($this->name . '_user_display_name'))
+          $user_attrs['display_name'] = esc_sql($this->get_field(get_option($this->name . '_user_display_name'), $user_entity));
+        $userdata = wp_update_user($user_attrs);
+        $results[] = ($userdata->ID > 0);
+      }
+
+      $metas = array('first_name', 'last_name', 'url', 'aim', 'yim', 'jabber', 'description');
+      foreach($metas as $meta) {
+        $key = get_option($this->name . '_user_' . $meta);
+        if (!empty($key)) {
+          $val = $this->get_field($key, $user_entity);
+          if (!empty($val))
+            $results[] = update_user_meta($user_id, $meta, $val);
+        }
+      }
+      return !array_search(false, $results);
+    }
+
+  /**
+   * Method used for retrieving a field value
+   *
+   * @param string $name
+   *   The name of the field to retrieve
+   * @param array $user_entity
+   *   The user entity returned from Capture
+   * @return string
+   *   Value retrieved from Capture
+   */
+    function get_field($name, $user_entity) {
+      if (strpos($name, '.')) {
+        $names = explode('.', $name);
+        $value = $user_entity;
+        foreach ($names as $n) {
+          $value = $value[$n];
+        }   
+        return $value;
+      }
+      else {
+        return $user_entity[$name];
+      }
     }
 
   /**
@@ -192,7 +274,7 @@ REDIRECT;
    */
     function refresh_token() {
       $api = new JanrainCaptureApi($this->name);
-      echo $api->refresh_access_token() ? '1' : '-1';
+      echo ($api->refresh_access_token() && $api->update_user_meta()) ? '1' : '-1';
       die();
     }
 

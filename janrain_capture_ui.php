@@ -18,11 +18,13 @@ class JanrainCaptureUi {
   function __construct($name) {
     $this->name = $name;
     if (!is_admin()) {
-      add_action('wp_head', array($this, 'head'));
+      add_action('wp_head', array(&$this, 'head'));
       add_action('wp_enqueue_scripts', array(&$this, 'registerScripts'));
-      add_filter('loginout', array(&$this, 'loginout'));
-      add_filter('logout_url', array(&$this, 'logout_url'), 10, 2);
-      add_filter('admin_url', array(&$this, 'admin_url'), 10, 3);
+      if (get_option($this->name . '_ui_native_links') != '0') {
+        add_filter('loginout', array(&$this, 'loginout'));
+        add_filter('logout_url', array(&$this, 'logout_url'), 10, 2);
+        add_filter('admin_url', array(&$this, 'admin_url'), 10, 3);
+      }
     }
   }
 
@@ -30,15 +32,18 @@ class JanrainCaptureUi {
    * Adds javascript libraries to the page.
    */
   function registerScripts() {
-    wp_enqueue_script('colorbox', WP_PLUGIN_URL . '/janrain-capture/colorbox/jquery.colorbox.js', array('jquery'));
-    wp_enqueue_script($this->name . '_main_script', WP_PLUGIN_URL . '/janrain-capture/janrain_capture_ui.js');	
+    if (get_option($this->name . '_ui_colorbox') != '0')
+      wp_enqueue_script('colorbox', WP_PLUGIN_URL . '/janrain-capture/colorbox/jquery.colorbox.js', array('jquery'));
+    if (get_option($this->name . '_ui_capture_js') != '0')
+      wp_enqueue_script($this->name . '_main_script', WP_PLUGIN_URL . '/janrain-capture/janrain_capture_ui.js');	
   }
 
   /**
    * Method bound to the wp_head action.
    */
   function head() {
-    wp_enqueue_style('colorbox', WP_PLUGIN_URL . '/janrain-capture/colorbox/colorbox.css');
+    if (get_option($this->name . '_ui_colorbox') != '0')
+      wp_enqueue_style('colorbox', WP_PLUGIN_URL . '/janrain-capture/colorbox/colorbox.css');
     $bp_js_path = get_option($this->name . '_bp_js_path');
     $bp_server_base_url = get_option($this->name . '_bp_server_base_url');
     $bp_bus_name = get_option($this->name . '_bp_bus_name');
@@ -67,7 +72,7 @@ BACKPLANE;
       $client_id = JanrainCapture::sanitize($client_id);
       $xdcomm = admin_url('admin-ajax.php') . '?action=' . $this->name . '_xdcomm';
       $redirect_uri = admin_url('admin-ajax.php') . '?action=' . $this->name . '_redirect_uri';
-      $logout = admin_url('admin-ajax.php') . '?action=' . $this->name . '_logout';
+      $logout = wp_logout_url('/');
       $sso_addr = esc_url('https://' . $sso_addr);
       echo <<<SSO
 <script type="text/javascript" src="$sso_addr/sso.js"></script>
