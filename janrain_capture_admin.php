@@ -62,7 +62,7 @@ class JanrainCaptureAdmin {
       array(
         'name' => $this->name . '_sso_address',
         'title' => 'SSO Application Domain',
-        'description' => 'Your Jarain Federate SSO domain (e.g. demo.janrainsso.com)',
+        'description' => 'Your Janrain Federate SSO domain (e.g. demo.janrainsso.com)',
         'default' => '',
         'type' => 'text',
         'screen' => 'options',
