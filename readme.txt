@@ -9,11 +9,21 @@ Janrain Capture is a cloud-hosted user management platform
 
 == Description ==
 
-Janrain Capture provides a cloud-hosted user management and authentication platform for collecting rich sets of user data and providing an interface for SSO through Janrain Federate.
+This module accelerates the time to implement Janrain Capture into your WordPress web sites, helping to improve your registration conversion rates by allowing your customers to register and sign-in through their Social Network of choice.
 
-[Janrain](http://www.janrain.com/)
-[Product Page](http://www.janrain.com/products/capture)
-[API Documentation](http://docs.janraincapture.com/)
+Janrain Capture is a hosted registration and authentication system that allows site owners to provide a central repository for user information, that can be deployed on one or more web sites. Registration and authentication can be done through connection to a social network identity provider such as Facebook, Google, Yahoo!, OpenID, LinkedIn, eBay, Twitter and many others or through traditional form field methods.
+
+Key features:
+* Social and form based registration
+* Social and form based login and authentication
+* Central data store for one or more sites
+* Single Sign On to federate identity across multiple domains
+
+[Existing Janrain Engage module for WordPress](http://wordpress.org/extend/plugins/rpx/)
+For more information about the Janrain Capture product please checkout [http://www.janrain.com/products/capture/](http://www.janrain.com/products/capture/)
+For technical documentation please refer to [http://developers.janrain.com/documentation/capture/](http://developers.janrain.com/documentation/capture/)
+
+Follow us on [Twitter](http://twitter.com/janrain) and on [Facebook](http://janrain.com/facebook) to keep up with the latest updates.
 
 == Installation ==
 Install through the Administration Panel or extract plugin archive in your plugin directory.
