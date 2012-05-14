@@ -8,72 +8,90 @@ jQuery(function(){
       }
     }
   }
-	jQuery(".modal-link").colorbox({iframe:true, width:function(){return parseDim(jQuery(this).attr('rel'), 'width');}, height:function(){return parseDim(jQuery(this).attr('rel'), 'height');}, scrolling: false, overlayClose: false, current: '', next: '', previous: ''});
-	
-	// Rewrite the logout link in the top bar. 
-	// TODO: This does not reference the logout link in the admin pages.
-	var logout_link = jQuery("#wp-admin-bar-logout > a").attr("href") + "&redirect_to=" + encodeURI(document.location.href);
-	jQuery("#wp-admin-bar-logout > a").attr("href", logout_link);
+  jQuery(".janrain_capture_anchor").colorbox({
+    iframe: true,
+    width: function() {
+      if (jQuery(this).attr('rel'))
+        return parseDim(jQuery(this).attr('rel'), 'width');
+      else
+        return '700px';
+    },
+    height: function() {
+      if (jQuery(this).attr('rel'))
+        return parseDim(jQuery(this).attr('rel'), 'height');
+      else
+        return '700px';
+    },
+    scrolling: false,
+    overlayClose: false,
+    current: '',
+    next: '',
+    previous: ''
+  });
 });
 
 var CAPTURE = {
   resize: function(jargs) {
     var args = jQuery.parseJSON(jargs);
     jQuery.colorbox.resize({ innerWidth: args.w, innerHeight: args.h });
-    if(typeof janrain_capture_on_resize == 'function') {
+    if(typeof(janrain_capture_on_resize) == 'function') {
       janrain_capture_on_resize(args);
     }
   },
   closeAuth: function() {
     jQuery.colorbox.close();
-    if(typeof janrain_capture_on_close_auth == 'function') {
+    if(typeof(janrain_capture_on_close_auth) == 'function') {
       janrain_capture_on_close_auth();
+    } else {
+      location.reload(true);
     }
   },
   closeRecoverPassword: function() {
     jQuery.colorbox.close();
-    if(typeof janrain_capture_on_close_recover_password == 'function') {
+    if(typeof(janrain_capture_on_close_recover_password) == 'function') {
       janrain_capture_on_close_recover_password();
     }
   },
   closeProfile: function() {
     jQuery.colorbox.close();
-    if(typeof janrain_capture_on_close_profile == 'function') {
+    CAPTURE.profileUpdate();
+    if(typeof(janrain_capture_on_close_profile) == 'function') {
       janrain_capture_on_close_profile();
     }
   },
-  token_expired: function() {
+  profileUpdate: function() {
     jQuery.ajax({
       url: ajaxurl,
+      method: 'POST',
       data: {
-        action: 'janrain_capture_refresh_token',
-        refresh_token: this.read_cookie('janrain_capture_refresh_token')
+        action: 'janrain_capture_profile_update',
       },
-      dataType: 'json',
       success: function(data) {
-        CAPTURE.save_tokens(data.access_token, data.refresh_token, data.expires_in);
-        var iframe = jQuery(".cboxIframe");
-        var src = iframe.attr('src');
-        src = src.replace(/[\?\&]access_token\=[^\&]+/,'');
-        var sep = (src.indexOf('?') > 0) ? '&' : '?';
-        iframe.attr('src', src + sep + 'access_token=' + data.access_token);
+        if (data == '1') {
+          if (typeof(janrain_capture_on_profile_update) == 'function')
+            janrain_capture_on_profile_update();
+          else
+            location.reload(true);
+        }
       }
     });
   },
-  save_tokens: function(access_token, refresh_token, expires_in) {
-    var xdate=new Date();
-    xdate.setSeconds(xdate.getSeconds()+expires_in);
-    document.cookie='janrain_capture_access_token='+access_token+'; expires='+xdate.toUTCString() + '; path=/';
-    var ydate=new Date();
-    ydate.setDate(ydate.getDate()+30);
-    document.cookie='janrain_capture_refresh_token='+refresh_token+'; expires='+ydate.toUTCString() + '; path=/';
+  token_expired: function() {
+    if (typeof(janrain_capture_on_token_expired) == 'function') {
+      janrain_capture_on_token_expired();
+    }
   },
-  read_cookie: function(k,r){return(r=RegExp('(^|; )'+encodeURIComponent(k)+'=([^;]*)').exec(document.cookie))?r[2]:null;},
   bp_ready: function() {
     if (typeof(window.Backplane) != 'undefined') {
       var channelId = Backplane.getChannelID();
       if (typeof(channelId) != 'undefined' && typeof(janrain_capture_on_bp_ready) == 'function')
         janrain_capture_on_bp_ready(channelId);
+      jQuery('a.capture-anon').each(function(){
+        channelId = encodeURIComponent(channelId);
+        jQuery(this).attr("href", jQuery(this).attr("href") + "&bp_channel=" + channelId).click(function(){
+          Backplane.expectMessages("identity/login");
+        });
+      });
     }
   }
 }
