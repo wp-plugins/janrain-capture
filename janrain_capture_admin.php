@@ -10,7 +10,6 @@ class JanrainCaptureAdmin {
 
   private $postMessage;
   private $fields;
-  private $name;
 
   /**
    * Initializes plugin name, builds array of fields to render.
@@ -18,19 +17,18 @@ class JanrainCaptureAdmin {
    * @param string $name
    *   The plugin name to use as a namespace
    */
-  function  __construct($name) {
-    $this->name = $name;
+  function  __construct() {
     $this->postMessage = array('class'=>'', 'message'=>'');
     $this->fields = array(
       // Main Screen Fields
       array(
-        'name' => $this->name . '_main_options',
+        'name' => JanrainCapture::$name . '_main_options',
         'title' => 'Main Options',
         'type' => 'title',
         'screen' => 'options'
       ),
       array(
-        'name' => $this->name . '_address',
+        'name' => JanrainCapture::$name . '_address',
         'title' => 'Application Domain',
         'description' => 'Your Capture application domain (e.g. demo.janraincapture.com)',
         'required' => true,
@@ -40,7 +38,7 @@ class JanrainCaptureAdmin {
         'validate' => '/[^a-z0-9\._-]+/i'
       ),
       array(
-        'name' => $this->name . '_client_id',
+        'name' => JanrainCapture::$name . '_client_id',
         'title' => 'API Client ID',
         'description' => 'Your Capture Client ID',
         'required' => true,
@@ -50,7 +48,7 @@ class JanrainCaptureAdmin {
         'validate' => '/[^a-z0-9]+/i'
       ),
       array(
-        'name' => $this->name . '_client_secret',
+        'name' => JanrainCapture::$name . '_client_secret',
         'title' => 'API Client Secret',
         'description' => 'Your Capture Client Secret',
         'required' => true,
@@ -60,7 +58,7 @@ class JanrainCaptureAdmin {
         'validate' => '/[^a-z0-9]+/i'
       ),
       array(
-        'name' => $this->name . '_sso_address',
+        'name' => JanrainCapture::$name . '_sso_address',
         'title' => 'SSO Application Domain',
         'description' => 'Your Janrain Federate SSO domain (e.g. demo.janrainsso.com)',
         'default' => '',
@@ -69,13 +67,13 @@ class JanrainCaptureAdmin {
         'validate' => '/[^a-z0-9\._-]+/i'
       ),
       array(
-        'name' => $this->name . '_backplane_settings',
+        'name' => JanrainCapture::$name . '_backplane_settings',
         'title' => 'Backplane Settings',
         'type' => 'title',
         'screen' => 'options'
       ),
       array(
-        'name' => $this->name . '_bp_server_base_url',
+        'name' => JanrainCapture::$name . '_bp_server_base_url',
         'title' => 'Server Base URL',
         'description' => 'Your Backplane server URL',
         'default' => '',
@@ -84,7 +82,7 @@ class JanrainCaptureAdmin {
         'validate' => '/[^a-z0-9\.:\/\&\?\=\%]+/i'
       ),
       array(
-        'name' => $this->name . '_bp_bus_name',
+        'name' => JanrainCapture::$name . '_bp_bus_name',
         'title' => 'Bus Name',
         'description' => 'Your Backplane Bus Name',
         'default' => '',
@@ -93,7 +91,7 @@ class JanrainCaptureAdmin {
         'validate' => '/[^a-z0-9\._-]+/i'
       ),
       array(
-        'name' => $this->name . '_bp_js_path',
+        'name' => JanrainCapture::$name . '_bp_js_path',
         'title' => 'JS Path',
         'description' => 'The path to backplane.js',
         'default' => '',
@@ -104,13 +102,13 @@ class JanrainCaptureAdmin {
 
       // Data Mapping Screen Fields
       array(
-        'name' => $this->name . '_standard_fields',
+        'name' => JanrainCapture::$name . '_standard_fields',
         'title' => 'Standard WordPress User Fields',
         'type' => 'title',
         'screen' => 'data'
       ),
       array(
-        'name' => $this->name . '_user_email',
+        'name' => JanrainCapture::$name . '_user_email',
         'title' => 'Email',
         'required' => true,
         'default' => 'email',
@@ -119,7 +117,7 @@ class JanrainCaptureAdmin {
         'validate' => '/[^a-z0-9\._-]+/i'
       ),
       array(
-        'name' => $this->name . '_user_login',
+        'name' => JanrainCapture::$name . '_user_login',
         'title' => 'Username',
         'description' => 'Usernames cannot be changed.',
         'required' => true,
@@ -129,7 +127,7 @@ class JanrainCaptureAdmin {
         'validate' => '/[^a-z0-9\._-]+/i'
       ),
       array(
-        'name' => $this->name . '_user_nicename',
+        'name' => JanrainCapture::$name . '_user_nicename',
         'title' => 'Nickname',
         'required' => true,
         'default' => 'displayName',
@@ -138,7 +136,7 @@ class JanrainCaptureAdmin {
         'validate' => '/[^a-z0-9\._-]+/i'
       ),
       array(
-        'name' => $this->name . '_user_display_name',
+        'name' => JanrainCapture::$name . '_user_display_name',
         'title' => 'Display Name',
         'required' => true,
         'default' => 'displayName',
@@ -147,13 +145,13 @@ class JanrainCaptureAdmin {
         'validate' => '/[^a-z0-9\._-]+/i'
       ),
       array(
-        'name' => $this->name . '_optional_fields',
+        'name' => JanrainCapture::$name . '_optional_fields',
         'title' => 'Optional User Fields',
         'type' => 'title',
         'screen' => 'data'
       ),
       array(
-        'name' => $this->name . '_user_first_name',
+        'name' => JanrainCapture::$name . '_user_first_name',
         'title' => 'First Name',
         'default' => 'givenName',
         'type' => 'text',
@@ -161,7 +159,7 @@ class JanrainCaptureAdmin {
         'validate' => '/[^a-z0-9\._-]+/i'
       ),
       array(
-        'name' => $this->name . '_user_last_name',
+        'name' => JanrainCapture::$name . '_user_last_name',
         'title' => 'Last Name',
         'default' => 'familyName',
         'type' => 'text',
@@ -169,7 +167,7 @@ class JanrainCaptureAdmin {
         'validate' => '/[^a-z0-9\._-]+/i'
       ),
       array(
-        'name' => $this->name . '_user_url',
+        'name' => JanrainCapture::$name . '_user_url',
         'title' => 'Website',
         'default' => '',
         'type' => 'text',
@@ -177,7 +175,7 @@ class JanrainCaptureAdmin {
         'validate' => '/[^a-z0-9\._-]+/i'
       ),
       array(
-        'name' => $this->name . '_user_aim',
+        'name' => JanrainCapture::$name . '_user_aim',
         'title' => 'AIM',
         'default' => '',
         'type' => 'text',
@@ -185,7 +183,7 @@ class JanrainCaptureAdmin {
         'validate' => '/[^a-z0-9\._-]+/i'
       ),
       array(
-        'name' => $this->name . '_user_yim',
+        'name' => JanrainCapture::$name . '_user_yim',
         'title' => 'Yahoo IM',
         'default' => '',
         'type' => 'text',
@@ -193,7 +191,7 @@ class JanrainCaptureAdmin {
         'validate' => '/[^a-z0-9\._-]+/i'
       ),
       array(
-        'name' => $this->name . '_user_jabber',
+        'name' => JanrainCapture::$name . '_user_jabber',
         'title' => 'Jabber / Google Talk',
         'default' => '',
         'type' => 'text',
@@ -201,7 +199,7 @@ class JanrainCaptureAdmin {
         'validate' => '/[^a-z0-9\._-]+/i'
       ),
       array(
-        'name' => $this->name . '_user_description',
+        'name' => JanrainCapture::$name . '_user_description',
         'title' => 'Biographical Info',
         'default' => 'aboutMe',
         'type' => 'text',
@@ -211,7 +209,7 @@ class JanrainCaptureAdmin {
 
       // UI Screen Fields
       array(
-        'name' => $this->name . '_ui_enabled',
+        'name' => JanrainCapture::$name . '_ui_enabled',
         'title' => 'Enable UI Features',
         'description' => 'You can disable all UI features if you prefer to write your own',
         'default' => '1',
@@ -220,13 +218,22 @@ class JanrainCaptureAdmin {
         'validate' => '/[^0-9]+/i'
       ),
       array(
-        'name' => $this->name . '_ui_options',
+        'name' => JanrainCapture::$name . '_ui_options',
         'title' => 'Other Options',
         'type' => 'title',
         'screen' => 'ui'
       ),
       array(
-        'name' => $this->name . '_ui_native_links',
+        'name' => JanrainCapture::$name . '_recover_password_screen',
+        'title' => 'Recover Password Screen',
+        'description' => 'The name of the Capture screen to launch for users who click the authentication link in password recover emails',
+        'default' => 'profile',
+        'type' => 'text',
+        'screen' => 'ui',
+        'validate' => '/[^a-z0-9\._-]+/i'
+      ),
+      array(
+        'name' => JanrainCapture::$name . '_ui_native_links',
         'title' => 'Override Native Links',
         'description' => 'Replace native Login & Profile links with Capture links',
         'default' => '1',
@@ -235,7 +242,7 @@ class JanrainCaptureAdmin {
         'validate' => '/[^0-9]+/i'
       ),
       array(
-        'name' => $this->name . '_ui_colorbox',
+        'name' => JanrainCapture::$name . '_ui_colorbox',
         'title' => 'Load Colorbox',
         'description' => 'You can use the colorbox JS & CSS bundled in our plugin or use your own',
         'default' => '1',
@@ -244,7 +251,7 @@ class JanrainCaptureAdmin {
         'validate' => '/[^0-9]+/i'
       ),
       array(
-        'name' => $this->name . '_ui_capture_js',
+        'name' => JanrainCapture::$name . '_ui_capture_js',
         'title' => 'Load Capture JS',
         'description' => 'The included Capture JS relies on Colorbox. You may want to disable it and use your own.',
         'default' => '1',
@@ -275,11 +282,11 @@ class JanrainCaptureAdmin {
    */
   function admin_menu() {
     $optionsPage = add_menu_page(__('Janrain Capture'), __('Janrain Capture'),
-      'manage_options', $this->name, array(&$this, 'options'));
-    $dataPage = add_submenu_page($this->name, __('Janrain Capture'), __('Data Mapping'),
-      'manage_options', $this->name . '_data', array(&$this, 'data'));
-    $uiPage = add_submenu_page($this->name, __('Janrain Capture'), __('UI Options'),
-      'manage_options', $this->name . '_ui', array(&$this, 'ui'));
+      'manage_options', JanrainCapture::$name, array(&$this, 'options'));
+    $dataPage = add_submenu_page(JanrainCapture::$name, __('Janrain Capture'), __('Data Mapping'),
+      'manage_options', JanrainCapture::$name . '_data', array(&$this, 'data'));
+    $uiPage = add_submenu_page(JanrainCapture::$name, __('Janrain Capture'), __('UI Options'),
+      'manage_options', JanrainCapture::$name . '_ui', array(&$this, 'ui'));
   }
 
   /**
@@ -319,6 +326,7 @@ class JanrainCaptureAdmin {
    *   Object with page title and action variables
    */
   function printAdmin($args) {
+    $name = JanrainCapture::$name;
     echo <<<HEADER
 <div id="message" class="{$this->postMessage['class']} fade">
   <p><strong>
@@ -327,7 +335,7 @@ class JanrainCaptureAdmin {
 </div>
 <div class="wrap">
   <h2>{$args->title}</h2>
-  <form method="post" id="{$this->name}_{$args->action}">
+  <form method="post" id="{$name}_{$args->action}">
     <table class="form-table">
       <tbody>
 HEADER;
@@ -341,7 +349,7 @@ HEADER;
       </tbody>
     </table>
     <p class="submit">
-      <input type="hidden" name="{$this->name}_action" value="{$args->action}" />
+      <input type="hidden" name="{$name}_action" value="{$args->action}" />
       <input type="submit" class="button-primary" value="Save Changes" />
     </p>
   </form>
@@ -441,14 +449,14 @@ TITLE;
    * Method to receive and store submitted options when posted.
    */
   public function onPost() {
-    if (isset($_POST[$this->name . '_action'])) {
+    if (isset($_POST[JanrainCapture::$name . '_action'])) {
       foreach($this->fields as $field) {
-        if ($field['screen'] != $_POST[$this->name . '_action'])
+        if ($field['screen'] != $_POST[JanrainCapture::$name . '_action'])
           continue;
 
         if (isset($_POST[$field['name']])) {
           $value = $_POST[$field['name']];
-          if ($field['name'] == $this->name . '_address' || $field['name'] == $this->name . '_sso_address')
+          if ($field['name'] == JanrainCapture::$name . '_address' || $field['name'] == JanrainCapture::$name . '_sso_address')
             $value = preg_replace('/^https?\:\/\//i', '', $value);
           if ($field['validate'])
             $value = preg_replace($field['validate'], '', $value);

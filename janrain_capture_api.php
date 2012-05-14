@@ -10,7 +10,6 @@ class JanrainCaptureAPI {
 
   protected $args;
   protected $capture_addr;
-  private $name;
   public $access_token;
   public $refresh_token;
   public $expires;
@@ -23,12 +22,11 @@ class JanrainCaptureAPI {
    * @param string $name
    *   The plugin name to use as a namespace
    */
-  function __construct($name) {
-    $this->name = $name;
+  function __construct() {
     $this->args = array();
-    $this->args['client_id'] = get_option($this->name . '_client_id');
-    $this->args['client_secret'] = get_option($this->name . '_client_secret');
-    $this->capture_addr = get_option($this->name . '_address');
+    $this->args['client_id'] = get_option(JanrainCapture::$name . '_client_id');
+    $this->args['client_secret'] = get_option(JanrainCapture::$name . '_client_secret');
+    $this->capture_addr = get_option(JanrainCapture::$name . '_address');
   }
 
   /**
@@ -112,9 +110,9 @@ class JanrainCaptureAPI {
     if (!$this->access_token || !$this->refresh_token || !$this->expires)
       return false;
     $results = array();
-    $results[] = update_user_meta($user_id, $this->name . '_access_token', $this->access_token);
-    $results[] = update_user_meta($user_id, $this->name . '_refresh_token', $this->refresh_token);
-    $results[] = update_user_meta($user_id, $this->name . '_expires', $this->expires);
+    $results[] = update_user_meta($user_id, JanrainCapture::$name . '_access_token', $this->access_token);
+    $results[] = update_user_meta($user_id, JanrainCapture::$name . '_refresh_token', $this->refresh_token);
+    $results[] = update_user_meta($user_id, JanrainCapture::$name . '_expires', $this->expires);
     return !array_search(false, $results);
   }
 
@@ -138,7 +136,7 @@ class JanrainCaptureAPI {
     $json_data = $this->call($command, $arg_array);
     if ($json_data) {
       $this->update_capture_token($json_data);
-      do_action($this->name . '_new_access_token', $json_data);
+      do_action(JanrainCapture::$name . '_new_access_token', $json_data);
       return true;
     }
 
@@ -156,7 +154,7 @@ class JanrainCaptureAPI {
       $current_user = wp_get_current_user();
       if (!$current_user->ID)
         return false;
-      $this->refresh_token = get_user_meta($current_user->ID, $this->name . '_refresh_token', true);
+      $this->refresh_token = get_user_meta($current_user->ID, JanrainCapture::$name . '_refresh_token', true);
     }
 
     if (!$this->refresh_token)
@@ -171,7 +169,7 @@ class JanrainCaptureAPI {
 
     if ($json_data) {
       $this->update_capture_token($json_data);
-      do_action($this->name . '_refresh_access_token', $json_data);
+      do_action(JanrainCapture::$name . '_refresh_access_token', $json_data);
       return true;
     }
 
@@ -190,9 +188,9 @@ class JanrainCaptureAPI {
     if (!$this->access_token) {
       $current_user = wp_get_current_user();
       if ($current_user->ID) {
-        $this->access_token = get_user_meta($current_user->ID, $this->name . '_access_token', true);
-        $this->refresh_token = get_user_meta($current_user->ID, $this->name . '_refresh_token', true);
-        $this->expires = get_user_meta($current_user->ID, $this->name . '_expires', true);
+        $this->access_token = get_user_meta($current_user->ID, JanrainCapture::$name . '_access_token', true);
+        $this->refresh_token = get_user_meta($current_user->ID, JanrainCapture::$name . '_refresh_token', true);
+        $this->expires = get_user_meta($current_user->ID, JanrainCapture::$name . '_expires', true);
       }
     }
 

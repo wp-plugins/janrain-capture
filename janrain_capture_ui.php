@@ -7,7 +7,6 @@
  *
  */
 class JanrainCaptureUi {
-  private $name;
 
   /**
    * Sets up actions, initializes plugin name.
@@ -15,12 +14,11 @@ class JanrainCaptureUi {
    * @param string $name
    *   The plugin name to use as a namespace
    */
-  function __construct($name) {
-    $this->name = $name;
+  function __construct() {
     if (!is_admin()) {
       add_action('wp_head', array(&$this, 'head'));
       add_action('wp_enqueue_scripts', array(&$this, 'registerScripts'));
-      if (get_option($this->name . '_ui_native_links') != '0') {
+      if (get_option(JanrainCapture::$name . '_ui_native_links') != '0') {
         add_filter('loginout', array(&$this, 'loginout'));
         add_filter('logout_url', array(&$this, 'logout_url'), 10, 2);
         add_filter('admin_url', array(&$this, 'admin_url'), 10, 3);
@@ -32,24 +30,52 @@ class JanrainCaptureUi {
    * Adds javascript libraries to the page.
    */
   function registerScripts() {
-    if (get_option($this->name . '_ui_colorbox') != '0')
+    if (get_option(JanrainCapture::$name . '_ui_colorbox') != '0')
       wp_enqueue_script('colorbox', WP_PLUGIN_URL . '/janrain-capture/colorbox/jquery.colorbox.js', array('jquery'));
-    if (get_option($this->name . '_ui_capture_js') != '0')
-      wp_enqueue_script($this->name . '_main_script', WP_PLUGIN_URL . '/janrain-capture/janrain_capture_ui.js');	
+    if (get_option(JanrainCapture::$name . '_ui_capture_js') != '0')
+      wp_enqueue_script(JanrainCapture::$name . '_main_script', WP_PLUGIN_URL . '/janrain-capture/janrain_capture_ui.js');	
   }
 
   /**
    * Method bound to the wp_head action.
    */
   function head() {
-    if (get_option($this->name . '_ui_colorbox') != '0')
+    if (get_option(JanrainCapture::$name . '_ui_colorbox') != '0')
       wp_enqueue_style('colorbox', WP_PLUGIN_URL . '/janrain-capture/colorbox/colorbox.css');
-    $bp_js_path = get_option($this->name . '_bp_js_path');
-    $bp_server_base_url = get_option($this->name . '_bp_server_base_url');
-    $bp_bus_name = get_option($this->name . '_bp_bus_name');
-    $sso_addr = get_option($this->name . '_sso_address');
-    $capture_addr = get_option($this->name . '_ui_address') ? get_option($this->name . '_ui_address') : get_option($this->name . '_address');
+    $bp_js_path = get_option(JanrainCapture::$name . '_bp_js_path');
+    $bp_server_base_url = get_option(JanrainCapture::$name . '_bp_server_base_url');
+    $bp_bus_name = get_option(JanrainCapture::$name . '_bp_bus_name');
+    $sso_addr = get_option(JanrainCapture::$name . '_sso_address');
+    $capture_addr = get_option(JanrainCapture::$name . '_ui_address') ? get_option(JanrainCapture::$name . '_ui_address') : get_option(JanrainCapture::$name . '_address');
     echo '<script type="text/javascript" src="' . esc_url('https://' . $capture_addr . '/cdn/javascripts/capture_client.js') . '"></script>';
+    if ($_GET['janrain_capture_action'] == 'password_recover') {
+      $query_args = array('action' => JanrainCapture::$name . '_profile');
+      if ($screen = get_option(JanrainCapture::$name . '_recover_password_screen')) {
+        $method = preg_replace('/^profile/', '', $screen);
+        $query_args['method'] = $method;
+      }
+      $recover_password_url = add_query_arg($query_args, admin_url('admin-ajax.php'));
+      echo <<<RECOVER
+        <script type="text/javascript">
+          jQuery(function(){
+            jQuery.colorbox({
+              href: '$recover_password_url',
+              iframe: true,
+              width: 700,
+              height: 700,
+              scrolling: false,
+              overlayClose: false,
+              current: '',
+              next: '',
+              previous: ''
+            });
+          });
+          function janrain_capture_on_profile_update() {
+            document.location.href = document.location.href.replace(/[\?\&]janrain_capture_action\=password_recover/, '');
+          }
+        </script>
+RECOVER;
+    }
     if ($bp_js_path)
       echo '<script type="text/javascript" src="' . esc_url($bp_js_path) . '"></script>';
     if ($bp_server_base_url && $bp_bus_name) {
@@ -68,10 +94,10 @@ jQuery(function(){
 BACKPLANE;
     }
     if ($sso_addr) {
-      $client_id = get_option($this->name . '_client_id');
+      $client_id = get_option(JanrainCapture::$name . '_client_id');
       $client_id = JanrainCapture::sanitize($client_id);
-      $xdcomm = admin_url('admin-ajax.php') . '?action=' . $this->name . '_xdcomm';
-      $redirect_uri = admin_url('admin-ajax.php') . '?action=' . $this->name . '_redirect_uri';
+      $xdcomm = admin_url('admin-ajax.php') . '?action=' . JanrainCapture::$name . '_xdcomm';
+      $redirect_uri = admin_url('admin-ajax.php') . '?action=' . JanrainCapture::$name . '_redirect_uri';
       $logout = wp_logout_url('/');
       $sso_addr = esc_url('https://' . $sso_addr);
       echo <<<SSO
@@ -109,8 +135,8 @@ SSO;
    */
   function loginout($link) {
     if (!is_user_logged_in()) {
-      $href = do_shortcode("[{$this->name} href_only='true']");
-      $classes = "{$this->name}_anchor {$this->name}_signin";
+      $href = do_shortcode('[' . JanrainCapture::$name . ' href_only="true"]');
+      $classes = JanrainCapture::$name . '_anchor ' . JanrainCapture::$name . '_signin';
       if (strpos($link, ' class='))
         $link = preg_replace("/(\sclass=[\"'][^\"']+)([\"'])/i", "$1 $classes$2", $link);
       else
@@ -160,7 +186,7 @@ SSO;
   function admin_url($url, $path, $blog_id) {
     $current_user = wp_get_current_user();
     if ($path == 'profile.php' && $current_user->ID)
-      return admin_url('admin-ajax.php') . "?action=" . $this->name . "_profile";
+      return admin_url('admin-ajax.php') . "?action=" . JanrainCapture::$name . "_profile";
     else
       return $url;
   }
