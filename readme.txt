@@ -5,25 +5,41 @@ Requires at least: 3.0
 Tested up to: 3.1
 License: APL
 
-Janrain Capture is a cloud-hosted user management platform
+Social User Registration and Profile Storage with Janrain Capture
 
 == Description ==
 
-This module accelerates the time to implement Janrain Capture into your WordPress web sites, helping to improve your registration conversion rates by allowing your customers to register and sign-in through their Social Network of choice.
+Janrain Capture provides hosted registration and authentication with social identity providers including Facebook, Google, Yahoo!, OpenID, LinkedIn, eBay, Twitter and many others or through traditional form field methods. Capture also includes a cloud-hosted registration and authentication system that allows site owners to maintain a central repository for user information, that can be deployed on one or more web sites.  Automatically store social profile data from social login and registration, site-specific data, off-line and 3rd-party data, as well as legacy data. Build a unified view on users by uniting this user information, normally distributed across disparate databases, mobile sites and apps, web properties and vendor systems such as email marketing, subscription billing or CRM to build a 360 degree view of users.
+This module greatly accelerates the time required to implement Janrain Capture into your WordPress web sites, helping to improve your registration conversion rates by allowing your customers to register and sign-in using their prefered identities.
+Janrain Capture’s registration and social profile database features include:
 
-Janrain Capture is a hosted registration and authentication system that allows site owners to provide a central repository for user information, that can be deployed on one or more web sites. Registration and authentication can be done through connection to a social network identity provider such as Facebook, Google, Yahoo!, OpenID, LinkedIn, eBay, Twitter and many others or through traditional form field methods.
+**Social login and registration**
+In a study conducted by Blue research, Janrain found that 86% of users are very likely to leave a site when prompted to create a new traditional account (username and password). Janrain Capture eliminates the need for a new username and password by authenticating users with existing 3rd party and social identities like Facebook, Google, Yahoo!, LinkedIn, Twitter, etc. Janrain also found that 42% of users prefer to use Facebook for social registration. However, with support for more than 20 identity providers, customers can meet the needs of the remain 58% of new users.
+**Pre-populated forms**
+88% of users admit to providing false registration info. Capture seamlessly pre-fills registration fields to streamline registration for users and provide customers with highly accurate, rich social profile data.
+**Traditional account support and mapping**
+Capture supports existing accounts with side-by-side social and traditional logins as well as the option for customers to offer traditional accounts to new users. Account mapping allows users to map a 3rd party identity to their legacy account resulting in a one-click return login experience for users and rich social profile data for customers.
+**Personalized, one-click return experience**
+Capture personalizes and simplifies the user’s return experience by welcoming the user back by name and prompting them to login with their previously chosen identity provider for a one-click return login.
+**Email verification and in-line form field validation**
+Capture features an email verification flow to ensure that all user profiles contain an active email account. In-line form field validation further improves the quality of user profile data with field format rules and unique username availability and suggestions.
+**Rich customization options**
+Capture registration enables customers to match registration screens to their site’s look and feel via CSS and API. Registration forms can configured to collect any definable field for storage in the Capture database and with conditional, progressive, and multi-forms, users see highly relevant registration screens based on user origin, activity, site, etc.
+**Self-service account management**
+Capture provides users and customers alike with reliable, self-service features for password reset and account deactivation or deletion. In addition, users can access a profile management form to add additional identity providers, update their user profile, or change their on-site privacy settings.
 
-Key features:
-* Social and form based registration
-* Social and form based login and authentication
-* Central data store for one or more sites
-* Single Sign On to federate identity across multiple domains
+=Advanced Registration Features=
+In addition, Capture supports websites with advanced features for sites and users:
+* TOS acceptance or subscription opt-in
+* CAPTCHA verification
+* Dirty word filter
+* Mobile optimizations and SDKs for native applications
+* Event hooks for 3rd party analytics
 
-[Existing Janrain Engage module for WordPress](http://wordpress.org/extend/plugins/rpx/)
-For more information about the Janrain Capture product please checkout [http://www.janrain.com/products/capture/](http://www.janrain.com/products/capture/)
-For technical documentation please refer to [http://developers.janrain.com/documentation/capture/](http://developers.janrain.com/documentation/capture/)
+[About Janrain Capture](http://janrain.com/products/capture/)
 
-Follow us on [Twitter](http://twitter.com/janrain) and on [Facebook](http://janrain.com/facebook) to keep up with the latest updates.
+For technical documentation please refer to
+(http://developers.janrain.com/documentation/capture/)[http://developers.janrain.com/documentation/capture/]
 
 == Installation ==
 Install through the Administration Panel or extract plugin archive in your plugin directory.
@@ -39,3 +55,8 @@ By default, [janrain_capture] will result in a link with the text "Sign in / Reg
 You can prevent the construction of the link and simply return the URL to the screen by adding the attribute href_only="true" to the shortcode.
 
 To insert links in your theme templates you can use the [do_shortcode](http://codex.wordpress.org/Function_Reference/do_shortcode) WordPress function.
+
+== Multisite Installation ==
+This plugin now fully supports WordPress Multisite. To install proceed as above, however you must Network Enable this plugin. The Janrain Capture administration menu will appear on the Network Admin dashboard.
+
+Individual blogs can be updated with separate UI settings and a different API Client ID through the Janrain Capture administration menu in each blog's dashboard. If no changes are made they will default to the network admin settings.

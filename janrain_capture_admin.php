@@ -262,7 +262,13 @@ class JanrainCaptureAdmin {
     );
 
     $this->onPost();
-    add_action('admin_menu', array(&$this,'admin_menu'));
+    if (is_multisite()) {
+      add_action('network_admin_menu', array(&$this,'admin_menu'));
+      if (!is_main_site())
+        add_action('admin_menu', array(&$this,'admin_menu'));
+    } else {
+      add_action('admin_menu', array(&$this,'admin_menu'));
+    }
   }
 
   /**
@@ -271,8 +277,8 @@ class JanrainCaptureAdmin {
   function activate() {
     foreach($this->fields as $field) {
       if (!empty($field['default'])) {
-        if (get_option($field['name']) === false)
-          update_option($field['name'], $field['default']);
+        if (JanrainCapture::get_option($field['name']) === false)
+          JanrainCapture::update_option($field['name'], $field['default']);
       }
     }
   }
@@ -283,8 +289,10 @@ class JanrainCaptureAdmin {
   function admin_menu() {
     $optionsPage = add_menu_page(__('Janrain Capture'), __('Janrain Capture'),
       'manage_options', JanrainCapture::$name, array(&$this, 'options'));
-    $dataPage = add_submenu_page(JanrainCapture::$name, __('Janrain Capture'), __('Data Mapping'),
-      'manage_options', JanrainCapture::$name . '_data', array(&$this, 'data'));
+    if (!is_multisite() || is_main_site()) {
+      $dataPage = add_submenu_page(JanrainCapture::$name, __('Janrain Capture'), __('Data Mapping'),
+        'manage_options', JanrainCapture::$name . '_data', array(&$this, 'data'));
+    }
     $uiPage = add_submenu_page(JanrainCapture::$name, __('Janrain Capture'), __('UI Options'),
       'manage_options', JanrainCapture::$name . '_ui', array(&$this, 'ui'));
   }
@@ -341,8 +349,16 @@ class JanrainCaptureAdmin {
 HEADER;
 
     foreach($this->fields as $field) {
-      if ($field['screen'] == $args->action)
+      if ($field['screen'] == $args->action) {
+        if (is_multisite()
+          && !is_main_site()
+          && $args->action == 'options'
+          && $field['name'] != JanrainCapture::$name . '_client_id'
+          && $field['name'] != JanrainCapture::$name . '_client_secret'
+          && $field['name'] != JanrainCapture::$name . '_main_options')
+          continue;
         $this->printField($field);
+      }
     }
 
     echo <<<FOOTER
@@ -364,7 +380,10 @@ FOOTER;
    *   A structured field definition with strings used in generating markup.
    */
   function printField($field) {
-    $value = get_option($field['name']);
+    if (is_multisite() && !is_main_site())
+      $value = (get_option($field['name']) !== false) ? get_option($field['name']) : JanrainCapture::get_option($field['name'], false, true);
+    else
+      $value = JanrainCapture::get_option($field['name']);
     $value = ($value !== false) ? $value : $field['default'];
     $r = (isset($field['required']) && $field['required'] == true) ? ' <span class="description">(required)</span>' : '';
     switch ($field['type']) {
@@ -451,19 +470,29 @@ TITLE;
   public function onPost() {
     if (isset($_POST[JanrainCapture::$name . '_action'])) {
       foreach($this->fields as $field) {
-        if ($field['screen'] != $_POST[JanrainCapture::$name . '_action'])
-          continue;
-
         if (isset($_POST[$field['name']])) {
           $value = $_POST[$field['name']];
           if ($field['name'] == JanrainCapture::$name . '_address' || $field['name'] == JanrainCapture::$name . '_sso_address')
             $value = preg_replace('/^https?\:\/\//i', '', $value);
           if ($field['validate'])
             $value = preg_replace($field['validate'], '', $value);
-          update_option($field['name'], $value);
-        } else if ($field['type'] == 'checkbox') {
-          $value = '0';
-          update_option($field['name'], $value);
+          if (is_multisite() && !is_main_site())
+            update_option($field['name'], $value);
+          else
+            JanrainCapture::update_option($field['name'], $value);
+        } else {
+          if ($field['type'] == 'checkbox' && $field['screen'] == $_POST[JanrainCapture::$name . '_action']) {
+            $value = '0';
+            if (is_multisite() && !is_main_site())
+              update_option($field['name'], $value);
+            else
+              JanrainCapture::update_option($field['name'], $value);
+          } else {
+            if (JanrainCapture::get_option($field['name']) === false
+              && isset($field['default'])
+              && (!is_multisite() || is_main_site()))
+              JanrainCapture::update_option($field['name'], $field['default']);
+          }
         }
       }
       $this->postMessage = array('class'=>'updated','message'=>'Configuration Saved');
@@ -471,4 +500,3 @@ TITLE;
   }
 
 }
-

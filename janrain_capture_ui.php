@@ -18,7 +18,7 @@ class JanrainCaptureUi {
     if (!is_admin()) {
       add_action('wp_head', array(&$this, 'head'));
       add_action('wp_enqueue_scripts', array(&$this, 'registerScripts'));
-      if (get_option(JanrainCapture::$name . '_ui_native_links') != '0') {
+      if (JanrainCapture::get_option(JanrainCapture::$name . '_ui_native_links') != '0') {
         add_filter('loginout', array(&$this, 'loginout'));
         add_filter('logout_url', array(&$this, 'logout_url'), 10, 2);
         add_filter('admin_url', array(&$this, 'admin_url'), 10, 3);
@@ -30,9 +30,9 @@ class JanrainCaptureUi {
    * Adds javascript libraries to the page.
    */
   function registerScripts() {
-    if (get_option(JanrainCapture::$name . '_ui_colorbox') != '0')
+    if (JanrainCapture::get_option(JanrainCapture::$name . '_ui_colorbox') != '0')
       wp_enqueue_script('colorbox', WP_PLUGIN_URL . '/janrain-capture/colorbox/jquery.colorbox.js', array('jquery'));
-    if (get_option(JanrainCapture::$name . '_ui_capture_js') != '0')
+    if (JanrainCapture::get_option(JanrainCapture::$name . '_ui_capture_js') != '0')
       wp_enqueue_script(JanrainCapture::$name . '_main_script', WP_PLUGIN_URL . '/janrain-capture/janrain_capture_ui.js');	
   }
 
@@ -40,17 +40,17 @@ class JanrainCaptureUi {
    * Method bound to the wp_head action.
    */
   function head() {
-    if (get_option(JanrainCapture::$name . '_ui_colorbox') != '0')
+    if (JanrainCapture::get_option(JanrainCapture::$name . '_ui_colorbox') != '0')
       wp_enqueue_style('colorbox', WP_PLUGIN_URL . '/janrain-capture/colorbox/colorbox.css');
-    $bp_js_path = get_option(JanrainCapture::$name . '_bp_js_path');
-    $bp_server_base_url = get_option(JanrainCapture::$name . '_bp_server_base_url');
-    $bp_bus_name = get_option(JanrainCapture::$name . '_bp_bus_name');
-    $sso_addr = get_option(JanrainCapture::$name . '_sso_address');
-    $capture_addr = get_option(JanrainCapture::$name . '_ui_address') ? get_option(JanrainCapture::$name . '_ui_address') : get_option(JanrainCapture::$name . '_address');
+    $bp_js_path = JanrainCapture::get_option(JanrainCapture::$name . '_bp_js_path');
+    $bp_server_base_url = JanrainCapture::get_option(JanrainCapture::$name . '_bp_server_base_url');
+    $bp_bus_name = JanrainCapture::get_option(JanrainCapture::$name . '_bp_bus_name');
+    $sso_addr = JanrainCapture::get_option(JanrainCapture::$name . '_sso_address');
+    $capture_addr = JanrainCapture::get_option(JanrainCapture::$name . '_ui_address') ? JanrainCapture::get_option(JanrainCapture::$name . '_ui_address') : JanrainCapture::get_option(JanrainCapture::$name . '_address');
     echo '<script type="text/javascript" src="' . esc_url('https://' . $capture_addr . '/cdn/javascripts/capture_client.js') . '"></script>';
     if ($_GET['janrain_capture_action'] == 'password_recover') {
       $query_args = array('action' => JanrainCapture::$name . '_profile');
-      if ($screen = get_option(JanrainCapture::$name . '_recover_password_screen')) {
+      if ($screen = JanrainCapture::get_option(JanrainCapture::$name . '_recover_password_screen')) {
         $method = preg_replace('/^profile/', '', $screen);
         $query_args['method'] = $method;
       }
@@ -94,7 +94,7 @@ jQuery(function(){
 BACKPLANE;
     }
     if ($sso_addr) {
-      $client_id = get_option(JanrainCapture::$name . '_client_id');
+      $client_id = JanrainCapture::get_option(JanrainCapture::$name . '_client_id');
       $client_id = JanrainCapture::sanitize($client_id);
       $xdcomm = admin_url('admin-ajax.php') . '?action=' . JanrainCapture::$name . '_xdcomm';
       $redirect_uri = admin_url('admin-ajax.php') . '?action=' . JanrainCapture::$name . '_redirect_uri';

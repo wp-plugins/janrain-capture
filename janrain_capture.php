@@ -6,7 +6,7 @@
 Plugin Name: Janrain Capture
 Plugin URI: http://www.janrain.com/
 Description: Collect, store and leverage user profile data from social networks in a flexible, lightweight hosted database.
-Version: 0.0.3
+Version: 0.0.4
 Author: Janrain
 Author URI: http://www.janrain.com/
 License: Apache License, Version 2.0
@@ -46,7 +46,7 @@ if (!class_exists('JanrainCapture')) {
       } else {
         add_shortcode(self::$name, array(&$this, 'shortcode'));
       }
-      if (get_option(self::$name . '_ui_enabled') != '0') {
+      if (self::get_option(self::$name . '_ui_enabled') != '0') {
         require_once $this->path . '/janrain_capture_ui.php';
         $ui = new JanrainCaptureUi();
       }
@@ -83,18 +83,19 @@ if (!class_exists('JanrainCapture')) {
           $user_entity = $user_entity['result'];
           do_action(self::$name . '_user_entity_loaded', $user_entity);
           // Lookup user based on returned uuid
-          $exists = get_users(array('blog_id'=>$GLOBALS['blog_id'], 'meta_key' => self::$name . '_uuid', 'meta_value' => $user_entity['uuid']));
+          $blog_id = (is_multisite()) ? 1 : $GLOBALS['blog_id'];
+          $exists = get_users(array('blog_id' => $blog_id, 'meta_key' => self::$name . '_uuid', 'meta_value' => $user_entity['uuid']));
           if (count($exists)<1) {
             $user_attrs = array();
             $user_attrs['user_pass'] = wp_generate_password($length=12, $include_standard_special_chars=false);
-            if (get_option(self::$name . '_user_email'))
-              $user_attrs['user_email'] = esc_sql($this->get_field(get_option(self::$name . '_user_email'), $user_entity));
-            if (get_option(self::$name . '_user_login'))
-              $user_attrs['user_login'] = esc_sql($this->get_field(get_option(self::$name . '_user_login'), $user_entity));
-            if (get_option(self::$name . '_user_nicename'))
-              $user_attrs['user_nicename'] = esc_sql($this->get_field(get_option(self::$name . '_user_nicename'), $user_entity));
-            if (get_option(self::$name . '_user_display_name'))
-              $user_attrs['display_name'] = esc_sql($this->get_field(get_option(self::$name . '_user_display_name'), $user_entity));
+            if (self::get_option(self::$name . '_user_email'))
+              $user_attrs['user_email'] = esc_sql($this->get_field(self::get_option(self::$name . '_user_email'), $user_entity));
+            if (self::get_option(self::$name . '_user_login'))
+              $user_attrs['user_login'] = esc_sql($this->get_field(self::get_option(self::$name . '_user_login'), $user_entity));
+            if (self::get_option(self::$name . '_user_nicename'))
+              $user_attrs['user_nicename'] = esc_sql($this->get_field(self::get_option(self::$name . '_user_nicename'), $user_entity));
+            if (self::get_option(self::$name . '_user_display_name'))
+              $user_attrs['display_name'] = esc_sql($this->get_field(self::get_option(self::$name . '_user_display_name'), $user_entity));
             $user_id = wp_insert_user($user_attrs);
             if (is_wp_error($user_id))
               throw new Exception($user_id->get_error_message());
@@ -102,11 +103,15 @@ if (!class_exists('JanrainCapture')) {
               throw new Exception('Janrain Capture: Failed to set uuid on new user');
             if (!$this->update_user_data($user_id, $user_entity, true))
               throw new Exception('Janrain Capture: Failed to update user data');
+            if (is_multisite())
+              add_user_to_blog(1, $user_id, 'subscriber');
           } else {
             $user = $exists[0];
             $user_id = $user->ID;
             if (!$this->update_user_data($user_id, $user_entity))
               throw new Exception('Janrain Capture: Failed to update user data');
+            if (is_multisite() && !is_user_member_of_blog($user_id))
+              add_user_to_blog(get_current_blog_id(), $user_id, 'subscriber');
           }
           if (!$api->update_user_meta($user_id))
             throw new Exception('Janrain Capture: Failed to update user meta');
@@ -167,12 +172,12 @@ REDIRECT;
         throw new Exception('Janrain Capture: No user access token found');
       $args = array(
         'redirect_uri' => admin_url('admin-ajax.php') . '?action=' . self::$name . '_redirect_uri',
-        'client_id' => self::sanitize(get_option(self::$name . '_client_id')),
+        'client_id' => self::sanitize(self::get_option(self::$name . '_client_id')),
         'xd_receiver' => admin_url('admin-ajax.php') . '?action=' . self::$name . '_xdcomm',
         'callback' => self::sanitize($callback),
         'access_token' => $access_token
       );
-      $capture_addr = get_option(self::$name . '_ui_address') ? get_option(self::$name . '_ui_address') : get_option(self::$name . '_address');
+      $capture_addr = self::get_option(self::$name . '_ui_address') ? self::get_option(self::$name . '_ui_address') : self::get_option(self::$name . '_address');
       $capture_addr = 'https://' . self::sanitize($capture_addr) . '/oauth/profile' . self::sanitize($method) . '?' . http_build_query($args, '', '&');
       header("Location: $capture_addr", true, 302);
       die();
@@ -222,19 +227,19 @@ REDIRECT;
       $results = array();
       if ($meta_only !== true) {
         $user_attrs = array('ID' => $user_id);
-        if (get_option(self::$name . '_user_email'))
-          $user_attrs['user_email'] = esc_sql($this->get_field(get_option(self::$name . '_user_email'), $user_entity));
-        if (get_option(self::$name . '_user_nicename'))
-          $user_attrs['user_nicename'] = esc_sql($this->get_field(get_option(self::$name . '_user_nicename'), $user_entity));
-        if (get_option(self::$name . '_user_display_name'))
-          $user_attrs['display_name'] = esc_sql($this->get_field(get_option(self::$name . '_user_display_name'), $user_entity));
+        if (self::get_option(self::$name . '_user_email'))
+          $user_attrs['user_email'] = esc_sql($this->get_field(self::get_option(self::$name . '_user_email'), $user_entity));
+        if (self::get_option(self::$name . '_user_nicename'))
+          $user_attrs['user_nicename'] = esc_sql($this->get_field(self::get_option(self::$name . '_user_nicename'), $user_entity));
+        if (self::get_option(self::$name . '_user_display_name'))
+          $user_attrs['display_name'] = esc_sql($this->get_field(self::get_option(self::$name . '_user_display_name'), $user_entity));
         $userdata = wp_update_user($user_attrs);
         $results[] = ($userdata->ID > 0);
       }
 
       $metas = array('first_name', 'last_name', 'url', 'aim', 'yim', 'jabber', 'description');
       foreach($metas as $meta) {
-        $key = get_option(self::$name . '_user_' . $meta);
+        $key = self::get_option(self::$name . '_user_' . $meta);
         if (!empty($key)) {
           $val = $this->get_field($key, $user_entity);
           if (!empty($val))
@@ -323,7 +328,7 @@ XDCOMM;
         'callback' => 'CAPTURE.closeProfile'
       ), $args));
       $class = 'capture-anon';
-      $capture_addr = get_option(self::$name . '_ui_address') ? get_option(self::$name . '_ui_address') : get_option(self::$name . '_address');
+      $capture_addr = self::get_option(self::$name . '_ui_address') ? self::get_option(self::$name . '_ui_address') : self::get_option(self::$name . '_address');
       if (strpos($action, 'profile') === 0) {
         $uargs = array('action' => self::$name . '_profile', 'callback' => self::sanitize($callback));
         if (strlen($action) > 7) {
@@ -338,7 +343,7 @@ XDCOMM;
         $args = array (
           'response_type' => 'code',
           'redirect_uri' => admin_url('admin-ajax.php') . '?action=' . self::$name . '_redirect_uri',
-          'client_id' => get_option(self::$name . '_client_id'),
+          'client_id' => self::get_option(self::$name . '_client_id'),
           'xd_receiver' => admin_url('admin-ajax.php') . '?action=' . self::$name . '_xdcomm',
           'recover_password_callback' => 'CAPTURE.closeRecoverPassword'
         );
@@ -366,6 +371,46 @@ XDCOMM;
    */   
     static function sanitize($s) {
       return preg_replace("/[^a-z0-9\._-]+/i", '', $s);
+    }
+
+  /**
+   * Returns the main site or network option if using multisite
+   *
+   * @param string $key
+   *   The option key to retrieve
+   * @param mixed $default
+   *   The default value to use
+   *
+   * @return string
+   *   The saved option or default value
+   */   
+    static function get_option($key, $default=false, $always_main=false) {
+      $value = get_option($key);
+      if (is_multisite()) {
+        if ($always_main)
+          $value = get_blog_option(1, $key, $default);
+        else
+          $value = ($value !== false) ? $value : get_blog_option(1, $key, $default);
+      }
+      return $value;
+    }
+
+  /**
+   * Updates the main site or network option if using multisite
+   *
+   * @param string $key
+   *   The option key to update
+   * @param mixed $value
+   *   The value to store in options
+   *
+   * @return boolean
+   *   True if option value changed, false if not or if failed
+   */   
+    static function update_option($key, $value) {
+      if(is_multisite())
+        return update_blog_option(1, $key, $value);
+      else
+        return update_option($key, $value);
     }
   }
 }

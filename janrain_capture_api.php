@@ -24,9 +24,9 @@ class JanrainCaptureAPI {
    */
   function __construct() {
     $this->args = array();
-    $this->args['client_id'] = get_option(JanrainCapture::$name . '_client_id');
-    $this->args['client_secret'] = get_option(JanrainCapture::$name . '_client_secret');
-    $this->capture_addr = get_option(JanrainCapture::$name . '_address');
+    $this->args['client_id'] = JanrainCapture::get_option(JanrainCapture::$name . '_client_id');
+    $this->args['client_secret'] = JanrainCapture::get_option(JanrainCapture::$name . '_client_secret');
+    $this->capture_addr = JanrainCapture::get_option(JanrainCapture::$name . '_address');
   }
 
   /**
