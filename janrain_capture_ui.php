@@ -23,6 +23,8 @@ class JanrainCaptureUi {
         add_filter('logout_url', array(&$this, 'logout_url'), 10, 2);
         add_filter('admin_url', array(&$this, 'admin_url'), 10, 3);
       }
+      if (JanrainCapture::share_enabled())
+        add_action('wp_footer', array(&$this, 'share_js'));
     }
   }
 
@@ -33,7 +35,7 @@ class JanrainCaptureUi {
     if (JanrainCapture::get_option(JanrainCapture::$name . '_ui_colorbox') != '0')
       wp_enqueue_script('colorbox', WP_PLUGIN_URL . '/janrain-capture/colorbox/jquery.colorbox.js', array('jquery'));
     if (JanrainCapture::get_option(JanrainCapture::$name . '_ui_capture_js') != '0')
-      wp_enqueue_script(JanrainCapture::$name . '_main_script', WP_PLUGIN_URL . '/janrain-capture/janrain_capture_ui.js');	
+      wp_enqueue_script(JanrainCapture::$name . '_main_script', WP_PLUGIN_URL . '/janrain-capture/janrain_capture_ui.js');
   }
 
   /**
@@ -42,6 +44,9 @@ class JanrainCaptureUi {
   function head() {
     if (JanrainCapture::get_option(JanrainCapture::$name . '_ui_colorbox') != '0')
       wp_enqueue_style('colorbox', WP_PLUGIN_URL . '/janrain-capture/colorbox/colorbox.css');
+    if (JanrainCapture::share_enabled())
+      wp_enqueue_style('janrain_share', WP_PLUGIN_URL . '/janrain-capture/stylesheet.css');
+
     $bp_js_path = JanrainCapture::get_option(JanrainCapture::$name . '_bp_js_path');
     $bp_server_base_url = JanrainCapture::get_option(JanrainCapture::$name . '_bp_server_base_url');
     $bp_bus_name = JanrainCapture::get_option(JanrainCapture::$name . '_bp_bus_name');
@@ -209,6 +214,53 @@ SSO;
       $pageURL .= $_SERVER["SERVER_NAME"].$_SERVER["REQUEST_URI"];
     }
     return $pageURL;
+  }
+
+  /**
+   * Outputs Engage Share widget js to the footer.
+   */
+  function share_js() {
+    $realm = JanrainCapture::get_option(JanrainCapture::$name . '_rpx_realm');
+    echo <<<SHARE
+<script type="text/javascript">
+(function() {
+  if (typeof window.janrain !== 'object') window.janrain = {};
+  if (typeof window.janrain.settings !== 'object') window.janrain.settings = {};
+  if (typeof window.janrain.settings.share !== 'object') window.janrain.settings.share = {};
+  if (typeof window.janrain.settings.packages !== 'object') janrain.settings.packages = ['share'];
+  else janrain.settings.packages.push('share');
+
+  janrain.settings.share.message = "";
+
+  function isReady() { janrain.ready = true; };
+  if (document.addEventListener) {    document.addEventListener("DOMContentLoaded", isReady, false);
+  } else {
+    window.attachEvent('onload', isReady);
+  }
+
+  var e = document.createElement('script');
+  e.type = 'text/javascript';
+  e.id = 'janrainWidgets';
+
+  if (document.location.protocol === 'https:') {
+    e.src = 'https://rpxnow.com/js/lib/$realm/widget.js';
+  } else {
+    e.src = 'http://widget-cdn.rpxnow.com/js/lib/$realm/widget.js';
+  }
+
+  var s = document.getElementsByTagName('script')[0];
+  s.parentNode.insertBefore(e, s);
+})();
+function setShare(url, title, desc, img, provider) {
+  janrain.engage.share.setUrl(url);
+  janrain.engage.share.setTitle(title);
+  janrain.engage.share.setDescription(desc);
+  janrain.engage.share.setImage(img);
+  janrain.engage.share.showProvider(provider);
+  janrain.engage.share.show();
+}
+</script>
+SHARE;
   }
 }
 

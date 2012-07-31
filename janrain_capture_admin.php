@@ -258,6 +258,15 @@ class JanrainCaptureAdmin {
         'type' => 'checkbox',
         'screen' => 'ui',
         'validate' => '/[^0-9]+/i'
+      ),
+      array(
+        'name' => JanrainCapture::$name . '_ui_share_enabled',
+        'title' => 'Enable Social Sharing',
+        'description' => 'Load the JS and CSS required for the Engage Share Widget',
+        'default' => '1',
+        'type' => 'checkbox',
+        'screen' => 'ui',
+        'validate' => '/[^0-9]+/i'
       )
     );
 
@@ -476,17 +485,11 @@ TITLE;
             $value = preg_replace('/^https?\:\/\//i', '', $value);
           if ($field['validate'])
             $value = preg_replace($field['validate'], '', $value);
-          if (is_multisite() && !is_main_site())
-            update_option($field['name'], $value);
-          else
-            JanrainCapture::update_option($field['name'], $value);
+          JanrainCapture::update_option($field['name'], $value);
         } else {
           if ($field['type'] == 'checkbox' && $field['screen'] == $_POST[JanrainCapture::$name . '_action']) {
             $value = '0';
-            if (is_multisite() && !is_main_site())
-              update_option($field['name'], $value);
-            else
-              JanrainCapture::update_option($field['name'], $value);
+            JanrainCapture::update_option($field['name'], $value);
           } else {
             if (JanrainCapture::get_option($field['name']) === false
               && isset($field['default'])
@@ -495,7 +498,28 @@ TITLE;
           }
         }
       }
-      $this->postMessage = array('class'=>'updated','message'=>'Configuration Saved');
+      if ($_POST[JanrainCapture::$name . '_action'] == 'options') {
+        $api = new JanrainCaptureApi();
+        $key = $api->rpx_api_key();
+        if ($key === false) {
+          $this->postMessage = array('class'=>'error','message'=>'Please verify your Client ID and Client Secret.');
+          JanrainCapture::update_option(JanrainCapture::$name . '_client_id', '');
+          JanrainCapture::update_option(JanrainCapture::$name . '_client_secret', '');
+        } else {
+          $this->postMessage = array('class'=>'updated','message'=>'Configuration Saved');
+          if ($key) {
+            JanrainCapture::update_option(JanrainCapture::$name . '_rpx_api_key', $key);
+            $result = $api->rpx_lookup_rp();
+            if (isset($result['realm']) && isset($result['shareProviders'])) {
+              $realm = str_replace('.rpxnow.com', '', $result['realm']);
+              JanrainCapture::update_option(JanrainCapture::$name . '_rpx_realm', $realm);
+              JanrainCapture::update_option(JanrainCapture::$name . '_rpx_share_providers', $result['shareProviders']);
+            }
+          }
+        }
+      } else {
+        $this->postMessage = array('class'=>'updated','message'=>'Configuration Saved');
+      }
     }
   }
 

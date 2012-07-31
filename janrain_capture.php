@@ -12,7 +12,7 @@ Author URI: http://www.janrain.com/
 License: Apache License, Version 2.0
  */
 
-if (!class_exists('JanrainCapture')) {  
+if (!class_exists('JanrainCapture')) {
   class JanrainCapture {
     public $path;
     public $basename;
@@ -45,6 +45,7 @@ if (!class_exists('JanrainCapture')) {
         add_action('wp_ajax_nopriv_' . self::$name . '_refresh_token', array(&$this, 'refresh_token'));
       } else {
         add_shortcode(self::$name, array(&$this, 'shortcode'));
+        add_shortcode('janrain_share', array(&$this, 'shortcode_share'));
       }
       if (self::get_option(self::$name . '_ui_enabled') != '0') {
         require_once $this->path . '/janrain_capture_ui.php';
@@ -361,6 +362,48 @@ XDCOMM;
     }
 
   /**
+   * Implementation of the janrain_share shortcode.
+   *
+   * @param string $args
+   *   Arguments appended to the shortcode
+   *
+   * @return string
+   *   Text or HTML to render in place of the shortcode
+   */
+    function shortcode_share($args) {
+      if (self::share_enabled()) {
+        global $post;
+        $image = '';
+        if ($post->ID) {
+          $images = get_children( array('post_parent' => get_the_ID(), 'post_status' => 'inherit', 'post_type' => 'attachment', 'post_mime_type' => 'image', 'order' => 'DESC', 'orderby' => 'menu_order ID') );
+          $first_image = array_shift($images);
+          $image = isset($first_image->ID) ? wp_get_attachment_url($first_image->ID) : '';
+        }
+        $atts = array(
+          'url' => ($post->ID ? get_permalink() : ''),
+          'title' => ($post->ID ? get_the_title() : ''),
+          'description' => ($post->ID ? get_the_excerpt() : ''),
+          'img' => $image,
+          'text' => 'Share on'
+        );
+        extract(shortcode_atts($atts, $args));
+        $link = '';
+        $url = addslashes(htmlspecialchars($url));
+        $description = addslashes(htmlspecialchars($description));
+        $title = addslashes(htmlspecialchars($title));
+        $img = addslashes(htmlspecialchars($img));
+        $text = htmlspecialchars($text);
+        $onclick = "setShare('$url', '$title', '$description', '$img', this.getAttribute('rel'))";
+        if ($icons = self::social_icons($onclick)) {
+          $link .= '<div class="janrain-share-container"><span class="janrain-share-text">' . $text . '</span>'.$icons.'</div>';
+        }
+        return $link;
+      } else {
+        return '';
+      }
+    }
+
+  /**
    * Sanitization method to remove special chars
    *
    * @param string $s
@@ -380,6 +423,8 @@ XDCOMM;
    *   The option key to retrieve
    * @param mixed $default
    *   The default value to use
+   * @param boolean $always_main
+   *   Always use the main blog
    *
    * @return string
    *   The saved option or default value
@@ -402,15 +447,60 @@ XDCOMM;
    *   The option key to update
    * @param mixed $value
    *   The value to store in options
+   * @param boolean $always_main
+   *   Always use the main blog
    *
    * @return boolean
    *   True if option value changed, false if not or if failed
    */   
-    static function update_option($key, $value) {
-      if(is_multisite())
+    static function update_option($key, $value, $always_main=false) {
+      if ($always_main)
         return update_blog_option(1, $key, $value);
       else
         return update_option($key, $value);
+    }
+
+  /**
+   * Retrieves the plugin version.
+   *
+   * @return string
+   *   String version
+   */
+    static function get_plugin_version() {
+      $default_headers = array('Version' => 'Version');
+      $plugin_data = get_file_data( __FILE__, $default_headers, 'plugin' );
+      return $plugin_data['Version'];
+    }
+
+  /**
+   * Retrieves the plugin version.
+   *
+   * @return string
+   *   String version
+   */
+    static function share_enabled() {
+      $enabled = self::get_option(self::$name . '_ui_share_enabled');
+      if ($enabled == '0')
+        return false;
+
+      $realm = self::get_option(self::$name . '_rpx_realm');
+      $share_providers = self::get_option(self::$name . '_rpx_share_providers');
+      return ($realm && $share_providers);
+    }
+
+    static function social_icons($onclick) {
+      $social_pub = self::get_option(self::$name . '_rpx_share_providers');
+      $social_providers = array_filter(explode(',', $social_pub));
+      if (is_array($social_providers)) {
+        $rpx_social_icons = ''; 
+
+        foreach ($social_providers as $val) {
+          $rpx_social_icons .= '<span class="janrain-provider-icon-16 janrain-provider-icon-'.$val.'" rel="'.$val.'" onclick="'.$onclick.'"></span>';
+        }   
+        $buttons = '<span class="rpx_social_icons">' . $rpx_social_icons . '</span>';
+        return $buttons;
+      }   
+      return false;
     }
   }
 }

@@ -51,7 +51,7 @@ class JanrainCaptureAPI {
 
     if (isset($arg_array)) {
       $headers['Content-Type'] = 'application/x-www-form-urlencoded';
-      $arg_array = array_merge($arg_array, $this->args);
+      $arg_array = array_merge($this->args, $arg_array);
       $result = wp_remote_post($url, array(
         'method' => 'POST',
         'body' => $arg_array,
@@ -222,5 +222,60 @@ class JanrainCaptureAPI {
 
     return $user_entity;
   }
-}
 
+  /**
+   * Fetches the Engage API key to get share settings
+   *
+   * @return mixed
+   *   The API key or false
+   */
+  public function rpx_api_key() {
+    $client_id =  JanrainCapture::get_option(JanrainCapture::$name . '_client_id', false, true);
+    $client_secret =  JanrainCapture::get_option(JanrainCapture::$name . '_client_secret', false, true);
+    $rpx_key = $this->call('settings/get', array(
+      'client_id' => $client_id,
+      'client_secret' => $client_secret,
+      'key' => 'rpx_key',
+      'for_client_id' => $this->args['client_id']
+    ));
+    if ($rpx_key === false)
+      return false;
+    if (!$rpx_key || !$rpx_key['result']) {
+      $rpx_key = $this->call('settings/get', array('key' => 'rpx_realm', 'for_client_id' => $this->args['client_id']));
+      if (!$rpx_key || !$rpx_key['result'])
+        return null;
+    }
+    return $rpx_key['result'];
+  }
+
+  /**
+   * Fetches the Engage share providers and realm name
+   *
+   * @return boolean
+   *   Boolean success
+   */
+  public function rpx_lookup_rp() {
+    $key = JanrainCapture::get_option(JanrainCapture::$name . '_rpx_api_key');
+    if (!$key)
+      return false;
+
+    $url = "https://rpxnow.com/plugin/lookup_rp";
+    $headers = array('Accept-encoding' => 'identity');
+    $arg_array = array(
+      'format' => 'json',
+      'apiKey' => $key,
+      'pluginName' => 'wordpress-capture',
+      'pluginVersion' => JanrainCapture::get_plugin_version()
+    );
+    $result = wp_remote_post($url, array(
+      'method' => 'POST',
+      'body' => $arg_array,
+      'headers' => $headers
+    ));
+    if (is_wp_error($result) || !isset($result['body']))
+      return false;
+
+    $json_data = json_decode($result['body'], true);
+    return $json_data;
+  }
+}

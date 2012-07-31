@@ -56,6 +56,17 @@ You can prevent the construction of the link and simply return the URL to the sc
 
 To insert links in your theme templates you can use the [do_shortcode](http://codex.wordpress.org/Function_Reference/do_shortcode) WordPress function.
 
+As of version 0.0.4 this plugin now supports Engage Social Sharing via the Engage app configured for Capture. To use this feature, ensure 'Enable Social Sharing' is checked in the UI Options administration page and use the [janrain_share] shortcode. If the $post object is available the title, description, URL, and the most recent attached image URL will automatically be determined for sharing. These variables, as well as the button text, can be overridden with the following shortcode attributes:
+
+* title
+* description
+* url
+* img
+* text
+
+Example:
+[janrain_share title="Janrain Engage Share Widget" description="Instructions for how to configure the Janrain Engage Share Widget" url="wordpress.org/extend/plugins/janrain-capture/" text="Tell a friend"]
+
 == Multisite Installation ==
 This plugin now fully supports WordPress Multisite. To install proceed as above, however you must Network Enable this plugin. The Janrain Capture administration menu will appear on the Network Admin dashboard.
 
