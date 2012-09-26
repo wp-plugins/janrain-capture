@@ -86,8 +86,26 @@ var CAPTURE = {
       var channelId = Backplane.getChannelID();
       if (typeof(channelId) != 'undefined' && typeof(janrain_capture_on_bp_ready) == 'function')
         janrain_capture_on_bp_ready(channelId);
-      jQuery('a.capture-anon').each(function(){
-        channelId = encodeURIComponent(channelId);
+
+      channelId = encodeURIComponent(channelId);
+      var ssotrue = false;
+      var ssojs = null;
+      jQuery('script').each(function() {
+			if(jQuery(this).attr('src')) {
+			  ssojs = jQuery(this).attr('src');
+		      if ( undefined != ssojs && ssojs.search(/sso.js/i) > 0 ) { 
+		    	  ssotrue = true;
+		    	  return false;
+		      }
+			}
+	      });
+      if (ssotrue) { 
+		// do sso - 
+		console.log('Federated');
+		sso_login_obj.bp_channel = Backplane.getChannelID();
+		JANRAIN.SSO.CAPTURE.check_login(sso_login_obj);
+      }
+      jQuery('a.janrain_capture_signin').each(function(){
         jQuery(this).attr("href", jQuery(this).attr("href") + "&bp_channel=" + channelId).click(function(){
           Backplane.expectMessages("identity/login");
         });

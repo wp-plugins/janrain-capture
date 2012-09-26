@@ -20,8 +20,5 @@
 .janrain-provider-icon-16, .janrain-provider-icon-32 {      
     margin-left: 5px;
     margin-bottom: 1px; 
-}
-
-.janrain-provider-icon-16:hover, .janrain-provider-icon-32:hover { 
-  cursor:pointer; 
+    cursor:pointer; 
 }

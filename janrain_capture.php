@@ -6,11 +6,17 @@
 Plugin Name: Janrain Capture
 Plugin URI: http://www.janrain.com/
 Description: Collect, store and leverage user profile data from social networks in a flexible, lightweight hosted database.
-Version: 0.0.4
+Version: 0.0.5
 Author: Janrain
 Author URI: http://www.janrain.com/
 License: Apache License, Version 2.0
  */
+
+function fix_logout_url( $url )
+{
+  $url = str_replace( '&amp;', '&', $url );
+  return $url;
+}
 
 if (!class_exists('JanrainCapture')) {
   class JanrainCapture {
@@ -247,7 +253,11 @@ REDIRECT;
             $results[] = update_user_meta($user_id, $meta, $val);
         }
       }
-      return !array_search(false, $results);
+      $result = !array_search(false, $results);
+      if($result) {
+        do_action(self::$name . '_user_updated', $user_id, $user_entity);
+      }
+      return $result;
     }
 
   /**
@@ -266,7 +276,7 @@ REDIRECT;
         $value = $user_entity;
         foreach ($names as $n) {
           $value = $value[$n];
-        }   
+        }
         return $value;
       }
       else {
@@ -411,7 +421,7 @@ XDCOMM;
    *
    * @return string
    *   Sanitized string
-   */   
+   */
     static function sanitize($s) {
       return preg_replace("/[^a-z0-9\._-]+/i", '', $s);
     }
@@ -428,7 +438,7 @@ XDCOMM;
    *
    * @return string
    *   The saved option or default value
-   */   
+   */
     static function get_option($key, $default=false, $always_main=false) {
       $value = get_option($key);
       if (is_multisite()) {
@@ -452,7 +462,7 @@ XDCOMM;
    *
    * @return boolean
    *   True if option value changed, false if not or if failed
-   */   
+   */
     static function update_option($key, $value, $always_main=false) {
       if ($always_main)
         return update_blog_option(1, $key, $value);
@@ -492,14 +502,14 @@ XDCOMM;
       $social_pub = self::get_option(self::$name . '_rpx_share_providers');
       $social_providers = array_filter(explode(',', $social_pub));
       if (is_array($social_providers)) {
-        $rpx_social_icons = ''; 
+        $rpx_social_icons = '';
 
         foreach ($social_providers as $val) {
           $rpx_social_icons .= '<span class="janrain-provider-icon-16 janrain-provider-icon-'.$val.'" rel="'.$val.'" onclick="'.$onclick.'"></span>';
-        }   
+        }
         $buttons = '<span class="rpx_social_icons">' . $rpx_social_icons . '</span>';
         return $buttons;
-      }   
+      }
       return false;
     }
   }

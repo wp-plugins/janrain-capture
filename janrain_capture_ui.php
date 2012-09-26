@@ -15,6 +15,7 @@ class JanrainCaptureUi {
    *   The plugin name to use as a namespace
    */
   function __construct() {
+    add_filter('logout_url', 'fix_logout_url');
     if (!is_admin()) {
       add_action('wp_head', array(&$this, 'head'));
       add_action('wp_enqueue_scripts', array(&$this, 'registerScripts'));
@@ -25,6 +26,9 @@ class JanrainCaptureUi {
       }
       if (JanrainCapture::share_enabled())
         add_action('wp_footer', array(&$this, 'share_js'));
+      else
+        echo JanrainCapture::share_enabled();
+        //add_action('wp_footer', array(&$this, 'share_js'));
     }
   }
 
@@ -105,16 +109,24 @@ BACKPLANE;
       $redirect_uri = admin_url('admin-ajax.php') . '?action=' . JanrainCapture::$name . '_redirect_uri';
       $logout = wp_logout_url('/');
       $sso_addr = esc_url('https://' . $sso_addr);
-      echo <<<SSO
+      echo <<<SSOA
 <script type="text/javascript" src="$sso_addr/sso.js"></script>
 <script type="text/javascript">
-JANRAIN.SSO.CAPTURE.check_login({
+var sso_login_obj = {
   sso_server: "$sso_addr",
   client_id: "$client_id",
   redirect_uri: "$redirect_uri",
   logout_uri: "$logout",
-  xd_receiver: "$xdcomm"
-});
+  xd_receiver: "$xdcomm",
+  bp_channel: ""
+};
+</script>
+SSOA;
+      if(!$bp_server_base_url){
+      echo <<<SSO
+console.log(sso_login_obj);
+<script type="text/javascript">
+JANRAIN.SSO.CAPTURE.check_login(sso_login_obj);
 function janrain_capture_logout() {
   JANRAIN.SSO.CAPTURE.logout({
     sso_server: "$sso_addr",
@@ -123,6 +135,7 @@ function janrain_capture_logout() {
 }
 </script>
 SSO;
+      }
     }
     echo '<script type="text/javascript">
       if (typeof(ajaxurl) == "undefined") var ajaxurl = "' . admin_url('admin-ajax.php') . '";
@@ -148,7 +161,13 @@ SSO;
         $link = str_replace("href=", "class=\"$classes\" href=", $link);
       $link = preg_replace("/(href=[\"'])[^\"']+([\"'])/i", "$1$href$2", $link);
     } else {
-      $href = wp_logout_url($this->current_page_url());
+      $sso_addr = JanrainCapture::get_option(JanrainCapture::$name . '_sso_address');
+      if($sso_addr) {
+        //TODO: shorthand function
+        $logout = wp_logout_url($this->current_page_url());
+        $href = "javascript:JANRAIN.SSO.CAPTURE.logout({ sso_server: 'https://$sso_addr', logout_uri: '$logout' });";
+      }
+      else { $href = wp_logout_url($this->current_page_url()); }
       $link = preg_replace("/href=[\"'][^\"']+[\"']/i", "href=\"$href\"", $link);
     }
     return $link;
