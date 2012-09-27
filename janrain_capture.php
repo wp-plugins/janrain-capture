@@ -6,7 +6,7 @@
 Plugin Name: Janrain Capture
 Plugin URI: http://www.janrain.com/
 Description: Collect, store and leverage user profile data from social networks in a flexible, lightweight hosted database.
-Version: 0.0.5
+Version: 0.0.6
 Author: Janrain
 Author URI: http://www.janrain.com/
 License: Apache License, Version 2.0
@@ -310,8 +310,8 @@ REDIRECT;
   </head>
   <body>
     <script type="text/javascript">
-      var rpxJsHost = (("https:" == document.location.protocol) ? "https://" : "http://static.");
-      document.write(unescape("%3Cscript src='" + rpxJsHost + "janraincapture.com/js/lib/xdcomm.js' type='text/javascript'%3E%3C/script%3E"));
+      var rpxJsHost = (("https:" == document.location.protocol) ? "https://d1lqe9temigv1p.cloudfront.net/js/lib/xdcomm.js" : "http://static.janraincapture.com/js/lib/xdcomm.js");
+      document.write(unescape("%3Cscript src='" + rpxJsHost + "' type='text/javascript'%3E%3C/script%3E"));
     </script>
   </body>
 </html>
