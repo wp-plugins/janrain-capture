@@ -4,11 +4,11 @@
  */
 /*
 Plugin Name: Janrain Capture
-Plugin URI: http://www.janrain.com/
+Plugin URI: http://janrain.com/capture/
 Description: Collect, store and leverage user profile data from social networks in a flexible, lightweight hosted database.
-Version: 0.0.6
+Version: 0.0.7
 Author: Janrain
-Author URI: http://www.janrain.com/
+Author URI: http://developers.janrain.com/extensions/wordpress-for-capture/
 License: Apache License, Version 2.0
  */
 
@@ -350,6 +350,9 @@ XDCOMM;
         $class = 'capture-auth';
       }
       else {
+        if (strpos($action, 'signin') === 0){
+          $action .= JanrainCapture::get_option(JanrainCapture::$name . '_signin_ext');
+        }
         $link = 'https://' . $capture_addr . '/oauth/' . $action;
         $args = array (
           'response_type' => 'code',
