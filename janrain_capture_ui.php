@@ -55,6 +55,8 @@ class JanrainCaptureUi {
     $bp_server_base_url = JanrainCapture::get_option(JanrainCapture::$name . '_bp_server_base_url');
     $bp_bus_name = JanrainCapture::get_option(JanrainCapture::$name . '_bp_bus_name');
     $sso_addr = JanrainCapture::get_option(JanrainCapture::$name . '_sso_address');
+    $sso_enabled = JanrainCapture::get_option(JanrainCapture::$name . '_sso_enabled');
+    $bp_enabled = JanrainCapture::get_option(JanrainCapture::$name . '_backplane_enabled');
     $capture_addr = JanrainCapture::get_option(JanrainCapture::$name . '_ui_address') ? JanrainCapture::get_option(JanrainCapture::$name . '_ui_address') : JanrainCapture::get_option(JanrainCapture::$name . '_address');
     echo '<script type="text/javascript" src="' . esc_url('https://' . $capture_addr . '/cdn/javascripts/capture_client.js') . '"></script>';
     if ($_GET['janrain_capture_action'] == 'password_recover') {
@@ -85,9 +87,9 @@ class JanrainCaptureUi {
         </script>
 RECOVER;
     }
-    if ($bp_js_path)
+    if ($bp_enabled && $bp_js_path)
       echo '<script type="text/javascript" src="' . esc_url($bp_js_path) . '"></script>';
-    if ($bp_server_base_url && $bp_bus_name) {
+    if ($bp_enabled && $bp_server_base_url && $bp_bus_name) {
       $bp_server_base_url = esc_url($bp_server_base_url);
       $bp_bus_name = JanrainCapture::sanitize($bp_bus_name);
       echo <<<BACKPLANE
@@ -102,7 +104,7 @@ jQuery(function(){
 </script>
 BACKPLANE;
     }
-    if ($sso_addr) {
+    if ($sso_enabled && $sso_addr) {
       $client_id = JanrainCapture::get_option(JanrainCapture::$name . '_client_id');
       $client_id = JanrainCapture::sanitize($client_id);
       $xdcomm = admin_url('admin-ajax.php') . '?action=' . JanrainCapture::$name . '_xdcomm';
@@ -122,7 +124,7 @@ var sso_login_obj = {
 };
 </script>
 SSOA;
-      if(!$bp_server_base_url){
+      if(!$bp_enabled){
       echo <<<SSO
 console.log(sso_login_obj);
 <script type="text/javascript">
@@ -162,7 +164,8 @@ SSO;
       $link = preg_replace("/(href=[\"'])[^\"']+([\"'])/i", "$1$href$2", $link);
     } else {
       $sso_addr = JanrainCapture::get_option(JanrainCapture::$name . '_sso_address');
-      if($sso_addr) {
+      $sso_enabled = JanrainCapture::get_option(JanrainCapture::$name . '_sso_enabled');
+      if($sso_enabled && $sso_addr) {
         //TODO: shorthand function
         $logout = wp_logout_url($this->current_page_url());
         $href = "javascript:JANRAIN.SSO.CAPTURE.logout({ sso_server: 'https://$sso_addr', logout_uri: '$logout' });";

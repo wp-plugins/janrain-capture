@@ -58,6 +58,24 @@ class JanrainCaptureAdmin {
         'validate' => '/[^a-z0-9]+/i'
       ),
       array(
+        'name' => JanrainCapture::$name . '_signin_ext',
+        'title' => 'Signin Screen Extension',
+        'description' => 'Modifies the signin path of the signin screen.',
+        'default' => '',
+        'type' => 'text',
+        'screen' => 'options',
+        'validate' => '/[^a-z0-9\._-]+/i'
+      ),
+      array(
+        'name' => JanrainCapture::$name . '_sso_enabled',
+        'title' => 'Enable SSO',
+        'description' => 'Enable/Disable SSO',
+        'default' => '0',
+        'type' => 'checkbox',
+        'screen' => 'options',
+        'validate' => '/[^0-9]+/i'
+      ),
+      array(
         'name' => JanrainCapture::$name . '_sso_address',
         'title' => 'SSO Application Domain',
         'description' => 'Your Janrain Federate SSO domain (e.g. demo.janrainsso.com)',
@@ -71,6 +89,15 @@ class JanrainCaptureAdmin {
         'title' => 'Backplane Settings',
         'type' => 'title',
         'screen' => 'options'
+      ),
+      array(
+        'name' => JanrainCapture::$name . '_backplane_enabled',
+        'title' => 'Enable Backplane',
+        'description' => 'Enable/Disable Backplane',
+        'default' => '0',
+        'type' => 'checkbox',
+        'screen' => 'options',
+        'validate' => '/[^0-9]+/i'
       ),
       array(
         'name' => JanrainCapture::$name . '_bp_server_base_url',
