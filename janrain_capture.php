@@ -12,12 +12,6 @@ Author URI: http://developers.janrain.com/extensions/wordpress-for-capture/
 License: Apache License, Version 2.0
  */
 
-function fix_logout_url( $url )
-{
-  $url = str_replace( '&amp;', '&', $url );
-  return $url;
-}
-
 if (!class_exists('JanrainCapture')) {
   class JanrainCapture {
     public $path;
@@ -38,25 +32,28 @@ if (!class_exists('JanrainCapture')) {
       if (is_admin()) {
         require_once $this->path . '/janrain_capture_admin.php';
         $admin = new JanrainCaptureAdmin();
-
         add_action('wp_ajax_' . self::$name . '_redirect_uri', array(&$this, 'redirect_uri'));
         add_action('wp_ajax_nopriv_' . self::$name . '_redirect_uri', array(&$this, 'redirect_uri'));
-        add_action('wp_ajax_' . self::$name . '_profile', array(&$this, 'profile'));
-        add_action('wp_ajax_nopriv_' . self::$name . '_profile', array(&$this, 'profile'));
-        add_action('wp_ajax_' . self::$name . '_profile_update', array(&$this, 'profile_update'));
-        add_action('wp_ajax_nopriv_' . self::$name . '_profile_update', array(&$this, 'profile_update'));
-        add_action('wp_ajax_' . self::$name . '_xdcomm', array(&$this, 'xdcomm'));
-        add_action('wp_ajax_nopriv_' . self::$name . '_xdcomm', array(&$this, 'xdcomm'));
         add_action('wp_ajax_' . self::$name . '_refresh_token', array(&$this, 'refresh_token'));
         add_action('wp_ajax_nopriv_' . self::$name . '_refresh_token', array(&$this, 'refresh_token'));
+        $ui_type = self::get_option(self::$name . '_ui_type');
+        if ($ui_type == "Capture 2.0") {
+          add_action('wp_ajax_' . self::$name . '_profile', array(&$this, 'widget_profile'));
+          add_action('wp_ajax_nopriv_' . self::$name . '_profile', array(&$this, 'widget_profile'));
+        } else {
+          add_action('wp_ajax_' . self::$name . '_profile', array(&$this, 'profile'));
+          add_action('wp_ajax_nopriv_' . self::$name . '_profile', array(&$this, 'profile'));
+          add_action('wp_ajax_' . self::$name . '_profile_update', array(&$this, 'profile_update'));
+          add_action('wp_ajax_nopriv_' . self::$name . '_profile_update', array(&$this, 'profile_update'));
+          add_action('wp_ajax_' . self::$name . '_xdcomm', array(&$this, 'xdcomm'));
+          add_action('wp_ajax_nopriv_' . self::$name . '_xdcomm', array(&$this, 'xdcomm'));
+        }
       } else {
         add_shortcode(self::$name, array(&$this, 'shortcode'));
         add_shortcode('janrain_share', array(&$this, 'shortcode_share'));
       }
-      if (self::get_option(self::$name . '_ui_enabled') != '0') {
-        require_once $this->path . '/janrain_capture_ui.php';
-        $ui = new JanrainCaptureUi();
-      }
+      require_once $this->path . '/janrain_capture_ui.php';
+      $ui = new JanrainCaptureUi();
     }
 
   /**
@@ -124,13 +121,13 @@ if (!class_exists('JanrainCapture')) {
             throw new Exception('Janrain Capture: Failed to update user meta');
           if ($api->password_recover === true)
             wp_redirect(add_query_arg(array('janrain_capture_action' => 'password_recover'), home_url()));
+          //echo $user_id;
           wp_set_auth_cookie($user_id);
         } else {
           throw new Exception('Janrain Capture: Could not retrieve user entity');
         }
-
-        $r = ($origin) ? esc_url($origin) : '/';
-
+        $r = ($origin) ? esc_url($origin) : site_url();
+        
         echo <<<REDIRECT
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
@@ -140,9 +137,6 @@ if (!class_exists('JanrainCapture')) {
   </head>
   <body>
     <script type="text/javascript">
-      if (window.self != window.parent)
-        window.parent.CAPTURE.closeAuth('$r');
-      else
         window.location.href = '$r';
     </script>
   </body>
@@ -153,7 +147,7 @@ REDIRECT;
         throw new Exception('Janrain Capture: Could not retrieve access_token');
       }
     }
-
+    
   /**
    * Method used for the janrain_capture_profile action on admin-ajax.php.
    * This method prints javascript to retreive the access_token from a cookie and
@@ -187,6 +181,30 @@ REDIRECT;
       $capture_addr = self::get_option(self::$name . '_ui_address') ? self::get_option(self::$name . '_ui_address') : self::get_option(self::$name . '_address');
       $capture_addr = 'https://' . self::sanitize($capture_addr) . '/oauth/profile' . self::sanitize($method) . '?' . http_build_query($args, '', '&');
       header("Location: $capture_addr", true, 302);
+      die();
+    }
+    
+  /**
+   * Method used for the janrain_capture_profile action on admin-ajax.php.
+   * This method renders the edit profile screen.
+   */
+    function widget_profile() {
+      $current_user = wp_get_current_user();
+      if (!$current_user->ID)
+        throw new Exception('Janrain Capture: user not logged in');
+      if ($expires && time() >= $expires) {
+        $api = new JanrainCaptureApi();
+        if ($api->refresh_access_token() === false)
+          throw new Exception('Janrain Capture: Could not refresh access_token');
+        if (!$api->update_user_meta())
+          throw new Exception('Janrain Capture: Failed to update user meta');
+      }
+      $access_token = get_user_meta($current_user->ID, self::$name . '_access_token', true);
+      $ui = new JanrainCaptureUi;
+      $ui->widget_js();
+      echo "\n<script>var access_token = '$access_token'</script>\n";
+      $ui->edit_screen($access_token);
+      
       die();
     }
 
@@ -328,6 +346,7 @@ XDCOMM;
    * @return string
    *   Text or HTML to render in place of the shortcode
    */
+    // TODO: update for Capture 2.0
     function shortcode($args) {
       extract(shortcode_atts(array(
         'type' => 'modal',
@@ -362,6 +381,14 @@ XDCOMM;
           'recover_password_callback' => 'CAPTURE.closeRecoverPassword'
         );
         $link = $link . '?' . http_build_query($args, '', '&');
+        if (JanrainCapture::get_option(JanrainCapture::$name . '_ui_type') == "Capture 2.0") {
+          if (!is_user_logged_in()) {
+            $link = '<a href="javascript:janrain.capture.ui.modal.open();" >' . $text . '</a>';
+          } else {
+            $link = '<a href="'.wp_logout_url(JanrainCaptureUi::current_page_url()).'" onclick="janrain.capture.ui.endCaptureSession();" >Log out</a>';
+          }
+          return $link;
+        }
       }
       if ($href_only == 'true')
         return esc_url($link);

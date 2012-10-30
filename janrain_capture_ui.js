@@ -33,7 +33,6 @@ jQuery(function(){
 var CAPTURE = {
   resize: function(jargs) {
     var args = jQuery.parseJSON(jargs);
-    jQuery.colorbox.resize({ innerWidth: args.w, innerHeight: args.h });
     if(typeof(janrain_capture_on_resize) == 'function') {
       janrain_capture_on_resize(args);
     }
