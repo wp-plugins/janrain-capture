@@ -8,7 +8,6 @@
  */
 class JanrainCaptureUi {
 
-  var $ifolder;
   /**
    * Sets up actions, initializes plugin name.
    *
@@ -16,12 +15,10 @@ class JanrainCaptureUi {
    *   The plugin name to use as a namespace
    */
   function __construct() {
-    
+    add_filter('logout_url', 'fix_logout_url');
     if (!is_admin()) {
       add_action('wp_head', array(&$this, 'head'));
       add_action('wp_enqueue_scripts', array(&$this, 'registerScripts'));
-      
-      //TODO: check the mode & add support for widget links
       if (JanrainCapture::get_option(JanrainCapture::$name . '_ui_native_links') != '0') {
         add_filter('loginout', array(&$this, 'loginout'));
         add_filter('logout_url', array(&$this, 'logout_url'), 10, 2);
@@ -33,207 +30,26 @@ class JanrainCaptureUi {
         echo JanrainCapture::share_enabled();
         //add_action('wp_footer', array(&$this, 'share_js'));
     }
-    if (JanrainCapture::get_option(JanrainCapture::$name . '_ui_type') == 'Capture 2.0') {
-      //TODO: check for current page to see what screen should be loaded
-      add_action('wp_footer', array(&$this, 'sign_in_screen'));
-    } else {
-      echo JanrainCapture::get_option(JanrainCapture::$name . '_ui_type');
-      die();
-    }
-    $this->ifolder = explode('/', JanrainCapture::get_option(JanrainCapture::$name . '_widget_screen_folder'));
-    array_pop($this->ifolder);
-    $this->ifolder = array_pop($this->ifolder);
-    $this->ifolder = WP_PLUGIN_DIR."/".$this->ifolder;
-    
   }
 
   /**
    * Adds javascript libraries to the page.
    */
   function registerScripts() {
-    if (JanrainCapture::get_option(JanrainCapture::$name . '_ui_type') == 'Capture UI') {
-      if (JanrainCapture::get_option(JanrainCapture::$name . '_ui_colorbox') != '0')
-        wp_enqueue_script('colorbox', WP_PLUGIN_URL . '/janrain-capture/colorbox/jquery.colorbox.js', array('jquery'));
-      if (JanrainCapture::get_option(JanrainCapture::$name . '_ui_capture_js') != '0')
-        wp_enqueue_script(JanrainCapture::$name . '_main_script', WP_PLUGIN_URL . '/janrain-capture/janrain_capture_ui.js');
-      }
+    if (JanrainCapture::get_option(JanrainCapture::$name . '_ui_colorbox') != '0')
+      wp_enqueue_script('colorbox', WP_PLUGIN_URL . '/janrain-capture/colorbox/jquery.colorbox.js', array('jquery'));
+    if (JanrainCapture::get_option(JanrainCapture::$name . '_ui_capture_js') != '0')
+      wp_enqueue_script(JanrainCapture::$name . '_main_script', WP_PLUGIN_URL . '/janrain-capture/janrain_capture_ui.js');
   }
 
   /**
    * Method bound to the wp_head action.
    */
   function head() {
-    switch (JanrainCapture::get_option(JanrainCapture::$name . '_ui_type')) {
-      case 'Capture 1.0':
-        $this->captureui_js();
-        break;
-      case 'Capture 2.0':
-        $this->widget_js();
-        break;
-      default:
-        // dont load any UI
-        break;
-    }
+    if (JanrainCapture::get_option(JanrainCapture::$name . '_ui_colorbox') != '0')
+      wp_enqueue_style('colorbox', WP_PLUGIN_URL . '/janrain-capture/colorbox/colorbox.css');
     if (JanrainCapture::share_enabled())
       wp_enqueue_style('janrain_share', WP_PLUGIN_URL . '/janrain-capture/stylesheet.css');
-  }
-
-  /**
-   * Method bound to the loginout filter.
-   *
-   * @param string $link
-   *   The Login/Logout link html string.
-   *
-   * @return string $link
-   *   The html to output to the page.
-   */
-  function loginout($link) {
-    if (JanrainCapture::get_option(JanrainCapture::$name . '_ui_type') == "Capture 1.0") {
-      if (!is_user_logged_in()) {
-        $href = do_shortcode('[' . JanrainCapture::$name . ' href_only="true"]');
-        $classes = JanrainCapture::$name . '_anchor ' . JanrainCapture::$name . '_signin';
-        if (strpos($link, ' class='))
-          $link = preg_replace("/(\sclass=[\"'][^\"']+)([\"'])/i", "$1 $classes$2", $link);
-        else
-          $link = str_replace("href=", "class=\"$classes\" href=", $link);
-        $link = preg_replace("/(href=[\"'])[^\"']+([\"'])/i", "$1$href$2", $link);
-      } else {
-        $sso_addr = JanrainCapture::get_option(JanrainCapture::$name . '_sso_address');
-        $sso_enabled = JanrainCapture::get_option(JanrainCapture::$name . '_sso_enabled');
-        if($sso_enabled && $sso_addr) {
-          //TODO: shorthand function
-          $logout = wp_logout_url($this->current_page_url());
-          $href = "javascript:JANRAIN.SSO.CAPTURE.logout({ sso_server: 'https://$sso_addr', logout_uri: '$logout' });";
-        } else { $href = wp_logout_url($this->current_page_url()); }
-        $link = preg_replace("/href=[\"'][^\"']+[\"']/i", "href=\"$href\"", $link);
-      }
-    } elseif (JanrainCapture::get_option(JanrainCapture::$name . '_ui_type') == "Capture 2.0") {
-      if (!is_user_logged_in()) {
-        $href = "javascript:janrain.capture.ui.modal.open();";
-      } else {
-        $href = wp_logout_url($this->current_page_url()); // urlencode(wp_make_link_relative(get_option('siteurl')));
-      }
-      $link = preg_replace("/href=[\"'][^\"']+[\"']/i", "href=\"$href\"", $link);
-      $link = str_ireplace(">", " onclick=\"janrain.capture.ui.endCaptureSession();\" >", $link);
-    }
-    return $link;
-  }
-
-  /**
-   * Method bound to the logout_url filter.
-   *
-   * @param string $logout_url
-   *   The logout url as generated by the wp_logout_url method.
-   *
-   * @param string $redirect
-   *   The redirect string passed in to the function.
-   *
-   * @return string $logout_url
-   *   The modified logout URL.
-   */
-  function logout_url($logout_url, $redirect) {
-    if (empty($redirect))
-      $logout_url = wp_logout_url($this->current_page_url());
-    $url = str_replace( '&amp;', '&', $logout_url );
-   return $url;
-  }
-
-  /**
-   * Method bound to the admin_url filter.
-   *
-   * @param string $url
-   *   The URL generated by the admin_url method.
-   *
-   * @param string $path
-   *   The path passed in to the admin_url method.
-   *
-   * @param int $blog_id
-   *   The ID of the current blog.
-   *
-   * @return string $link
-   *   The html to output to the page.
-   */
-  function admin_url($url, $path, $blog_id) {
-    $current_user = wp_get_current_user();
-    if ($path == 'profile.php' && $current_user->ID)
-      return admin_url('admin-ajax.php') . "?action=" . JanrainCapture::$name . "_profile";
-    else
-      return $url;
-  }
-
-  /**
-   * Returns the current page URL
-   *
-   * @return string
-   *   Page URL
-   */
-  function current_page_url() {
-    $pageURL = 'http';
-    if ( isset($_SERVER["HTTPS"]) ) {
-      if ($_SERVER["HTTPS"] == "on") $pageURL .= "s";
-    }
-    $pageURL .= "://";
-    if ($_SERVER["SERVER_PORT"] != "80") {
-      $pageURL .= $_SERVER["SERVER_NAME"].":".$_SERVER["SERVER_PORT"].$_SERVER["REQUEST_URI"];
-    } else {
-      $pageURL .= $_SERVER["SERVER_NAME"].$_SERVER["REQUEST_URI"];
-    }
-    return $pageURL;
-  }
-
-  /**
-   * Outputs Engage Share widget js to the footer.
-   */
-  function share_js() {
-    $realm = JanrainCapture::get_option(JanrainCapture::$name . '_rpx_realm');
-    echo <<<SHARE
-<script type="text/javascript">
-(function() {
-  if (typeof window.janrain !== 'object') window.janrain = {};
-  if (typeof window.janrain.settings !== 'object') window.janrain.settings = {};
-  if (typeof window.janrain.settings.share !== 'object') window.janrain.settings.share = {};
-  if (typeof window.janrain.settings.packages !== 'object') janrain.settings.packages = ['share'];
-  else janrain.settings.packages.push('share');
-
-  janrain.settings.share.message = "";
-
-  function isReady() { janrain.ready = true; };
-  if (document.addEventListener) {    document.addEventListener("DOMContentLoaded", isReady, false);
-  } else {
-    window.attachEvent('onload', isReady);
-  }
-
-  var e = document.createElement('script');
-  e.type = 'text/javascript';
-  e.id = 'janrainWidgets';
-
-  if (document.location.protocol === 'https:') {
-    e.src = 'https://rpxnow.com/js/lib/$realm/widget.js';
-  } else {
-    e.src = 'http://widget-cdn.rpxnow.com/js/lib/$realm/widget.js';
-  }
-
-  var s = document.getElementsByTagName('script')[0];
-  s.parentNode.insertBefore(e, s);
-})();
-function setShare(url, title, desc, img, provider) {
-  janrain.engage.share.setUrl(url);
-  janrain.engage.share.setTitle(title);
-  janrain.engage.share.setDescription(desc);
-  janrain.engage.share.setImage(img);
-  janrain.engage.share.showProvider(provider);
-  janrain.engage.share.show();
-}
-</script>
-SHARE;
-  }
-
-  /**
-   * Outputs CaptureUI js.
-   */
-  function captureui_js() {
-        if (JanrainCapture::get_option(JanrainCapture::$name . '_ui_colorbox') != '0')
-      wp_enqueue_style('colorbox', WP_PLUGIN_URL . '/janrain-capture/colorbox/colorbox.css');
 
     $bp_js_path = JanrainCapture::get_option(JanrainCapture::$name . '_bp_js_path');
     $bp_server_base_url = JanrainCapture::get_option(JanrainCapture::$name . '_bp_server_base_url');
@@ -327,158 +143,146 @@ SSO;
       if (typeof(ajaxurl) == "undefined") var ajaxurl = "' . admin_url('admin-ajax.php') . '";
 </script>';
   }
-  
+
   /**
-   * Outputs Capture widget js.
+   * Method bound to the loginout filter.
+   *
+   * @param string $link
+   *   The Login/Logout link html string.
+   *
+   * @return string $link
+   *   The html to output to the page.
    */
-  function widget_js() {
-    
-    $folder = JanrainCapture::get_option(JanrainCapture::$name . '_widget_screen_folder');
-    
-    // capture
-    $settings["capture.redirectUri"] = admin_url('admin-ajax.php') . '?action=' . JanrainCapture::$name . '_redirect_uri';
-    $settings["capture.appId"] = JanrainCapture::get_option(JanrainCapture::$name . '_widget_app_id');
-    $settings["capture.clientId"] = JanrainCapture::get_option(JanrainCapture::$name . '_widget_client_id');
-    $settings["capture.responseType"] = "code";
-    $settings["capture.captureServer"] = JanrainCapture::get_option(JanrainCapture::$name . '_widget_address');
-    $settings["capture.registerFlow"] = JanrainCapture::get_option(JanrainCapture::$name . '_widget_reg_flow');
-    $settings["capture.packages"] = JanrainCapture::get_option(JanrainCapture::$name . '_widget_packages');
-    $janrain_packages = implode("','",$settings["capture.packages"]);
-    $settings["capture.recaptchaPublicKey"] = JanrainCapture::get_option(JanrainCapture::$name . '_widget_recaptcha_pk');
-    $settings["capture.loadJsUrl"] = JanrainCapture::get_option(JanrainCapture::$name . '_widget_load_js');
-    
-    // engage
-    $settings["appUrl"] = JanrainCapture::get_option(JanrainCapture::$name . '_widget_engage_url');
-    
-    // federate
-    $settings["capture.federate"] = JanrainCapture::get_option(JanrainCapture::$name . '_widget_sso_enabled');
-    $settings["capture.federateServer"] = JanrainCapture::get_option(JanrainCapture::$name . '_widget_sso_address');
-    $settings["capture.federateXdReceiver"] = JanrainCapture::get_option(JanrainCapture::$name . '_widget_so_xd');
-    $settings["capture.federateLogoutUri"] = JanrainCapture::get_option(JanrainCapture::$name . '_widget_sso_logout');
-    
-    // backplane
-    $settings["capture.backplane"] = JanrainCapture::get_option(JanrainCapture::$name . '_widget_backplane_enabled');
-    $settings["capture.backplaneBusName"] = JanrainCapture::get_option(JanrainCapture::$name . '_widget_bp_bus_name');
-
-    // check the stylesheets folder for css files
-    $dir = new DirectoryIterator($this->ifolder."/stylesheets");
-    foreach ($dir as $fileinfo) {
-      $fn = $fileinfo->getFilename();
-      if (!$fileinfo->isDot() && stripos($fn,'.css')) {
-        switch (true){
-          // if file begins with mobile set is as a mobile style
-          case (stripos($fn, 'mobile') === 0):
-            $settings["capture.mobileStylesheets"].= "'".$folder."stylesheets/$fn',";
-            break;
-          // if file begins with ie set is as an IE style
-          case (stripos($fn, 'ie') === 0):
-              $settings["capture.conditionalIEStylesheets"].= "'".$folder."stylesheets/$fn',";
-              break;
-          // otherwise set it as a normal style
-          default:
-              $settings["capture.stylesheets"].= "'".$folder."stylesheets/$fn',";
-              break;
-        }
-      }
-    }
-    
-    echo <<<WIDGETCAPTURE
-<script type="text/javascript">
-function janrainSignOut(){
-      janrain.capture.ui.endCaptureSession();
-}
-(function() {
-    if (typeof window.janrain !== 'object') window.janrain = {};
-    window.janrain.settings = {};
-    window.janrain.settings.capture = {};
-    
-    // capture settings
-    janrain.settings.capture.redirectUri = '{$settings["capture.redirectUri"]}';
-    janrain.settings.capture.appId= '{$settings["capture.appId"]}';
-    janrain.settings.capture.clientId = '{$settings["capture.clientId"]}';
-    janrain.settings.capture.responseType = '{$settings["capture.responseType"]}';
-    janrain.settings.capture.captureServer = '{$settings["capture.captureServer"]}';
-    janrain.settings.capture.registerFlow = '{$settings["capture.registerFlow"]}';
-    janrain.settings.packages = ['$janrain_packages'];
-    janrain.settings.capture.recaptchaPublicKey = '{$settings["capture.recaptchaPublicKey"]}';
-    
-    // styles
-    janrain.settings.capture.stylesheets = [{$settings["capture.stylesheets"]}];
-WIDGETCAPTURE;
-
-     //mobile styles
-     if($settings["capture.mobileStylesheets"]){ ?>
-      janrain.settings.capture.mobileStylesheets = '<?php echo $settings["capture.mobileStylesheets"] ?>';
-    <?php }
-    
-    //IE styles
-     if($settings["capture.conditionalIEStylesheets"]){ ?>
-      janrain.settings.capture.conditionalIEStylesheets = '<?php echo $settings["capture.conditionalIEStylesheets"] ?>';
-    <?php }
-    
-    if(in_array("login",$settings["capture.packages"])){ ?>
- 
-    // engage settings
-    janrain.settings.appUrl = '<?php echo $settings["appUrl"] ?>';
-    janrain.settings.tokenAction = 'event';
-    janrain.settings.providers =["google","twitter","facebook","linkedin"];
-    <?php }
-    
-    if($settings["capture.backplane"]){ ?>
-    
-    
-     //backplane settings
-     janrain.settings.capture.backplane = '<?php echo $settings["capture.backplane"] ?>';
-     janrain.settings.capture.backplaneBusName = '<?php echo $settings["capture.backplaneBusName"] ?>';
-    <?php }
-    
-    if($settings["capture.federate"]){ ?>
-    
-    
-      // federate settings
-      janrain.settings.capture.federate = '<?php echo $settings["capture.federate"] ?>';
-      janrain.settings.capture.federateServer = '<?php echo $settings["capture.federateServer"] ?>';
-      janrain.settings.capture.federateXdReceiver = '<?php echo $settings["capture.federateXdReceiver"] ?>';
-      janrain.settings.capture.federateLogoutUri = '<?php echo $settings["capture.federateLogoutUri"] ?>';
-    <?php }
-
-include_once $this->ifolder.'/settings.php';
-    
-    echo <<<WIDGETFINISH
-    
-    function isReady() { janrain.ready = true; };
-    if (document.addEventListener) {
-        document.addEventListener("DOMContentLoaded", isReady, false);
+  function loginout($link) {
+    if (!is_user_logged_in()) {
+      $href = do_shortcode('[' . JanrainCapture::$name . ' href_only="true"]');
+      $classes = JanrainCapture::$name . '_anchor ' . JanrainCapture::$name . '_signin';
+      if (strpos($link, ' class='))
+        $link = preg_replace("/(\sclass=[\"'][^\"']+)([\"'])/i", "$1 $classes$2", $link);
+      else
+        $link = str_replace("href=", "class=\"$classes\" href=", $link);
+      $link = preg_replace("/(href=[\"'])[^\"']+([\"'])/i", "$1$href$2", $link);
     } else {
-        window.attachEvent('onload', isReady);
+      $sso_addr = JanrainCapture::get_option(JanrainCapture::$name . '_sso_address');
+      $sso_enabled = JanrainCapture::get_option(JanrainCapture::$name . '_sso_enabled');
+      if($sso_enabled && $sso_addr) {
+        //TODO: shorthand function
+        $logout = wp_logout_url($this->current_page_url());
+        $href = "javascript:JANRAIN.SSO.CAPTURE.logout({ sso_server: 'https://$sso_addr', logout_uri: '$logout' });";
+      }
+      else { $href = wp_logout_url($this->current_page_url()); }
+      $link = preg_replace("/href=[\"'][^\"']+[\"']/i", "href=\"$href\"", $link);
     }
+    return $link;
+  }
 
-    var e = document.createElement('script');
-    e.type = 'text/javascript';
-    e.id = 'janrainAuthWidget'
-    var url = document.location.protocol === 'https:' ? 'https://' : 'http://';
-    url += '{$settings["capture.loadJsUrl"]}';
-    e.src = url;
-    var s = document.getElementsByTagName('script')[0];
-    s.parentNode.insertBefore(e, s);
+  /**
+   * Method bound to the logout_url filter.
+   *
+   * @param string $logout_url
+   *   The logout url as generated by the wp_logout_url method.
+   *
+   * @param string $redirect
+   *   The redirect string passed in to the function.
+   *
+   * @return string $logout_url
+   *   The modified logout URL.
+   */
+  function logout_url($logout_url, $redirect) {
+    if (empty($redirect))
+      return wp_logout_url($this->current_page_url());
+    else
+      return $logout_url;
+  }
+
+  /**
+   * Method bound to the admin_url filter.
+   *
+   * @param string $url
+   *   The URL generated by the admin_url method.
+   *
+   * @param string $path
+   *   The path passed in to the admin_url method.
+   *
+   * @param int $blog_id
+   *   The ID of the current blog.
+   *
+   * @return string $link
+   *   The html to output to the page.
+   */
+  function admin_url($url, $path, $blog_id) {
+    $current_user = wp_get_current_user();
+    if ($path == 'profile.php' && $current_user->ID)
+      return admin_url('admin-ajax.php') . "?action=" . JanrainCapture::$name . "_profile";
+    else
+      return $url;
+  }
+
+  /**
+   * Returns the current page URL
+   *
+   * @return string
+   *   Page URL
+   */
+  function current_page_url() {
+    $pageURL = 'http';
+    if ( isset($_SERVER["HTTPS"]) ) {
+      if ($_SERVER["HTTPS"] == "on") $pageURL .= "s";
+    }
+    $pageURL .= "://";
+    if ($_SERVER["SERVER_PORT"] != "80") {
+      $pageURL .= $_SERVER["SERVER_NAME"].":".$_SERVER["SERVER_PORT"].$_SERVER["REQUEST_URI"];
+    } else {
+      $pageURL .= $_SERVER["SERVER_NAME"].$_SERVER["REQUEST_URI"];
+    }
+    return $pageURL;
+  }
+
+  /**
+   * Outputs Engage Share widget js to the footer.
+   */
+  function share_js() {
+    $realm = JanrainCapture::get_option(JanrainCapture::$name . '_rpx_realm');
+    echo <<<SHARE
+<script type="text/javascript">
+(function() {
+  if (typeof window.janrain !== 'object') window.janrain = {};
+  if (typeof window.janrain.settings !== 'object') window.janrain.settings = {};
+  if (typeof window.janrain.settings.share !== 'object') window.janrain.settings.share = {};
+  if (typeof window.janrain.settings.packages !== 'object') janrain.settings.packages = ['share'];
+  else janrain.settings.packages.push('share');
+
+  janrain.settings.share.message = "";
+
+  function isReady() { janrain.ready = true; };
+  if (document.addEventListener) {    document.addEventListener("DOMContentLoaded", isReady, false);
+  } else {
+    window.attachEvent('onload', isReady);
+  }
+
+  var e = document.createElement('script');
+  e.type = 'text/javascript';
+  e.id = 'janrainWidgets';
+
+  if (document.location.protocol === 'https:') {
+    e.src = 'https://rpxnow.com/js/lib/$realm/widget.js';
+  } else {
+    e.src = 'http://widget-cdn.rpxnow.com/js/lib/$realm/widget.js';
+  }
+
+  var s = document.getElementsByTagName('script')[0];
+  s.parentNode.insertBefore(e, s);
 })();
-    </script>
-WIDGETFINISH;
-  }
-  function sign_in_screen(){
-    $url = $this->ifolder . "/";
-    $url.= JanrainCapture::get_option(JanrainCapture::$name . '_widget_auth_screen');
-    include_once $url;
-  }
-  function edit_screen(){
-    $url = $this->ifolder . "/";
-    $url.= JanrainCapture::get_option(JanrainCapture::$name . '_widget_edit_screen');
-    include_once $url;
-  }
-  function public_screen(){
-    $url = $this->ifolder . "/";
-    $url.= JanrainCapture::get_option(JanrainCapture::$name . '_widget_public_screen');
-    include_once $url;
+function setShare(url, title, desc, img, provider) {
+  janrain.engage.share.setUrl(url);
+  janrain.engage.share.setTitle(title);
+  janrain.engage.share.setDescription(desc);
+  janrain.engage.share.setImage(img);
+  janrain.engage.share.showProvider(provider);
+  janrain.engage.share.show();
+}
+</script>
+SHARE;
   }
 }
 
