@@ -213,13 +213,14 @@ function janrainCaptureWidgetOnLoad() {
 }
 </script>
 <div style="display:none;" id="editProfile">
-    <div class="capture-profile-photo">
+  <div class="grid-block">
+     <div class="col125">
         <h3>Profile Photo</h3>
-        <div class="capture_profile_section contentBoxWhiteShadow clearfix">
+        <div class="contentBoxWhiteShadow clearfix">
             {* photoManager *}
         </div>
         <h3>Linked Accounts</h3>
-        <div class="capture_profile_section contentBoxWhiteShadow clearfix">
+        <div class="contentBoxWhiteShadow clearfix">
             {* linkedAccounts *}
             {* linkAccountContainer *}
                 <div class="capture_header">
@@ -236,10 +237,9 @@ function janrainCaptureWidgetOnLoad() {
         <div class="janrain_traditional_account_only contentBoxWhiteShadow capture_profile_section">
             <a href="#" data-capturescreen="changePassword">Change Password</a>
         </div>
-    </div>
-    <div id="capture_accountInfo">
+     </div>
+    <div class="col250">
         <h3>Account Info</h3>
-        <div class="contentBoxWhiteShadow capture_profile_section">
             {* editProfileForm *}
                 <div class="capture_editCol">
                     {* displayName *}
@@ -257,8 +257,8 @@ function janrainCaptureWidgetOnLoad() {
                     </div>
                 </div>
             {* /editProfileForm *}
-        </div>
     </div>
+  </div>
 </div>
 <div style="display:none;" id="changePassword">
     <div class="capture_header">
@@ -634,7 +634,7 @@ EDITP;
         'name' => JanrainCapture::$name . '_widget_fsui_enabled',
         'title' => 'Enable Filesystem Mode',
         'description' => 'If checked files are used to display screens (in the Janrain Capture Screens plugin by defualt) [Filesystem Mode]<br/>If unchecked the screens from the Database fields below are used (CSS file must still be hosted) [Database Mode]',
-        'default' => '1',
+        'default' => '0',
         'type' => 'checkbox',
         'screen' => 'widgetui',
         'validate' => '/[^0-9]+/i'
@@ -847,18 +847,24 @@ EDITP;
    */
   function admin_menu() {
     
+    $ui = JanrainCapture::get_option(JanrainCapture::$name . '_ui_type');
     $optPage = add_menu_page(__('Janrain Capture'), __('Janrain Capture'),
       'manage_options', JanrainCapture::$name, array(&$this, 'main'));
    
-    $optionsPage = add_submenu_page(JanrainCapture::$name, __('Janrain Capture'), __('Capture 1.0'),
-      'manage_options', JanrainCapture::$name . '_options', array(&$this, 'options'));
-    
-    $widgetPage = add_submenu_page(JanrainCapture::$name, __('Janrain Capture'), __('Capture 2.0'),
-      'manage_options', JanrainCapture::$name . '_widget', array(&$this, 'widget'));
-    
-    $widgetPage = add_submenu_page(JanrainCapture::$name, __('Janrain Capture'), __('Capture 2.0 UI'),
-      'manage_options', JanrainCapture::$name . '_widgetui', array(&$this, 'widgetui'));
-    
+    if ($ui == "Capture 1.0") {
+      $optionsPage = add_submenu_page(JanrainCapture::$name, __('Janrain Capture'), __('1.0 Settings'),
+        'manage_options', JanrainCapture::$name . '_options', array(&$this, 'options'));
+    } elseif ($ui == "Capture 2.0") {
+      $widgetPage = add_submenu_page(JanrainCapture::$name, __('Janrain Capture'), __('2.0 Settings'),
+        'manage_options', JanrainCapture::$name . '_widget', array(&$this, 'widget'));
+      $widgetUiPage = add_submenu_page(JanrainCapture::$name, __('Janrain Capture'), __('UI Settings'),
+        'manage_options', JanrainCapture::$name . '_widgetui', array(&$this, 'widgetui'));
+    } else {
+      $optionsPage = add_submenu_page(JanrainCapture::$name, __('Janrain Capture'), __('Capture 1.0'),
+        'manage_options', JanrainCapture::$name . '_options', array(&$this, 'options'));
+      $widgetPage = add_submenu_page(JanrainCapture::$name, __('Janrain Capture'), __('Capture 2.0'),
+        'manage_options', JanrainCapture::$name . '_widget', array(&$this, 'widget'));
+    }
     if (!is_multisite() || is_main_site()) {
       $dataPage = add_submenu_page(JanrainCapture::$name, __('Janrain Capture'), __('Data Mapping'),
         'manage_options', JanrainCapture::$name . '_data', array(&$this, 'data'));
@@ -957,6 +963,43 @@ HEADER;
       <input type="submit" class="button-primary" value="Save Changes" />
     </p>
   </form>
+  <script>
+  function display_hide(name) {
+    if (name=="fs") {
+        jQuery('h3[class="title"]:contains("Database Mode Settings")').hide();
+        jQuery('[name="janrain_capture_widget_css_file"]').parent().parent().hide();
+        jQuery('[name="janrain_capture_widgetui_auth_screen"]').parent().parent().hide();
+        jQuery('[name="janrain_capture_widgetui_edit_screen"]').parent().parent().hide();
+        
+        jQuery('h3[class="title"]:contains("Filesystem Mode Settings")').show();
+        jQuery('[name="janrain_capture_widget_screen_folder"]').parent().parent().show();
+        jQuery('[name="janrain_capture_widget_auth_screen"]').parent().parent().show();
+        jQuery('[name="janrain_capture_widget_edit_screen"]').parent().parent().show();
+    } else {
+        jQuery('h3[class="title"]:contains("Filesystem Mode Settings")').hide();
+        jQuery('[name="janrain_capture_widget_screen_folder"]').parent().parent().hide();
+        jQuery('[name="janrain_capture_widget_auth_screen"]').parent().parent().hide();
+        jQuery('[name="janrain_capture_widget_edit_screen"]').parent().parent().hide();
+        
+        jQuery('h3[class="title"]:contains("Database Mode Settings")').show();
+        jQuery('[name="janrain_capture_widget_css_file"]').parent().parent().show();
+        jQuery('[name="janrain_capture_widgetui_auth_screen"]').parent().parent().show();
+        jQuery('[name="janrain_capture_widgetui_edit_screen"]').parent().parent().show();
+    }
+  }
+  if (jQuery('[name="janrain_capture_widget_fsui_enabled"]').attr('checked') == "checked") {
+    display_hide("fs");
+  } else {
+    display_hide("db");
+  }
+  jQuery('[name="janrain_capture_widget_fsui_enabled"]').click(function() {
+    if(this.checked) {
+      display_hide("fs");
+    } else {
+      display_hide("db");
+    }
+  });
+  </script>
 </div>
 FOOTER;
   }

@@ -21,7 +21,7 @@ class JanrainCaptureUi {
       add_action('wp_head', array(&$this, 'head'));
       add_action('wp_enqueue_scripts', array(&$this, 'registerScripts'));
       
-      //TODO: check the mode & add support for widget links
+      // check the mode & add support for widget links
       if (JanrainCapture::get_option(JanrainCapture::$name . '_ui_native_links') != '0') {
         add_filter('loginout', array(&$this, 'loginout'));
         add_filter('logout_url', array(&$this, 'logout_url'), 10, 2);
@@ -34,13 +34,10 @@ class JanrainCaptureUi {
         //add_action('wp_footer', array(&$this, 'share_js'));
     }
     if (JanrainCapture::get_option(JanrainCapture::$name . '_ui_type') == 'Capture 2.0') {
-      //TODO: check for current page to see what screen should be loaded
+      //check for current page to see what screen should be loaded
       if($this->current_page_url() != JanrainCapture::get_option(JanrainCapture::$name . '_widget_edit_page')) {
         add_action('wp_footer', array(&$this, 'sign_in_screen'));
       }
-    } else {
-      echo JanrainCapture::get_option(JanrainCapture::$name . '_ui_type');
-      die();
     }
     $this->ifolder = explode('/', JanrainCapture::get_option(JanrainCapture::$name . '_widget_screen_folder'));
     array_pop($this->ifolder);
@@ -105,7 +102,7 @@ class JanrainCaptureUi {
         if($sso_enabled && $sso_addr) {
           //TODO: shorthand function
           $logout = wp_logout_url($this->current_page_url());
-          $href = "javascript:JANRAIN.SSO.CAPTURE.logout({ sso_server: 'https://$sso_addr', logout_uri: '$logout' });";
+          $href = "javascript:authDelegate.logout(); JANRAIN.SSO.CAPTURE.logout({ sso_server: 'https://$sso_addr', logout_uri: '$logout' });";
         } else { $href = wp_logout_url($this->current_page_url()); }
         $link = preg_replace("/href=[\"'][^\"']+[\"']/i", "href=\"$href\"", $link);
       }
@@ -116,7 +113,7 @@ class JanrainCaptureUi {
         $href = wp_logout_url($this->current_page_url()); // urlencode(wp_make_link_relative(get_option('siteurl')));
       }
       $link = preg_replace("/href=[\"'][^\"']+[\"']/i", "href=\"$href\"", $link);
-      $link = str_ireplace(">", " onclick=\"janrain.capture.ui.endCaptureSession();\" >", $link);
+      $link = str_ireplace(">", " onclick=\"authDelegate.logout(); janrain.capture.ui.endCaptureSession();\" >", $link);
     }
     return $link;
   }
@@ -411,12 +408,12 @@ function janrainSignOut(){
 WIDGETCAPTURE;
 
      //mobile styles
-     if($settings["capture.mobileStylesheets"]){ ?>
+     if(isset($settings["capture.mobileStylesheets"])){ ?>
       janrain.settings.capture.mobileStylesheets = '<?php echo $settings["capture.mobileStylesheets"] ?>';
     <?php }
     
     //IE styles
-     if($settings["capture.conditionalIEStylesheets"]){ ?>
+     if(isset($settings["capture.conditionalIEStylesheets"])){ ?>
       janrain.settings.capture.conditionalIEStylesheets = '<?php echo $settings["capture.conditionalIEStylesheets"] ?>';
     <?php }
     
@@ -429,7 +426,6 @@ WIDGETCAPTURE;
     <?php }
     
     if($settings["capture.backplane"]){ ?>
-    
     
      //backplane settings
      janrain.settings.capture.backplane = '<?php echo $settings["capture.backplane"] ?>';
