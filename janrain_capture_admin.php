@@ -81,7 +81,7 @@ function janrainCaptureWidgetOnLoad() {
         <h1>Sign Up / Sign In</h1>
     </div>
     <div class="capture_signin">
-        <h2>Welcome Back {* welcomeName *}</h2>
+        <h2>Welcome Back, {* welcomeName *}</h2>
         {* loginWidget *}
         <div class="capture_centerText switchLink"><a href="#" data-cancelcapturereturnexperience="true">Use another account</a></div>
     </div>
@@ -90,7 +90,7 @@ function janrainCaptureWidgetOnLoad() {
     <div class="capture_header">
         <h1>Sign Up / Sign In</h1>
     </div>
-    <h2 class="capture_centerText">Welcome back, <span id="displayNameData"></span>!</h2>
+    <h2 class="capture_centerText">Welcome back<span id="displayNameData"></span>!</h2>
         <div id="userPhoto" class="inline">
         </div>
         <div class="inline">
@@ -531,7 +531,6 @@ EDITP;
         'default' => '',
         'type' => 'long-text',
         'screen' => 'widget',
-        'validate' => '/[^a-z0-9]+/i'
       ),
      array(
         'name' => JanrainCapture::$name . '_widget_federate',
@@ -1152,20 +1151,14 @@ TITLE;
       if ($_POST[JanrainCapture::$name . '_action'] == 'options') {
         $api = new JanrainCaptureApi();
         $key = $api->rpx_api_key();
-        if ($key === false) {
-          $this->postMessage = array('class'=>'error','message'=>'Please verify your Client ID and Client Secret.');
-          JanrainCapture::update_option(JanrainCapture::$name . '_client_id', '');
-          JanrainCapture::update_option(JanrainCapture::$name . '_client_secret', '');
-        } else {
-          $this->postMessage = array('class'=>'updated','message'=>'Configuration Saved');
-          if ($key) {
-            JanrainCapture::update_option(JanrainCapture::$name . '_rpx_api_key', $key);
-            $result = $api->rpx_lookup_rp();
-            if (isset($result['realm']) && isset($result['shareProviders'])) {
-              $realm = str_replace('.rpxnow.com', '', $result['realm']);
-              JanrainCapture::update_option(JanrainCapture::$name . '_rpx_realm', $realm);
-              JanrainCapture::update_option(JanrainCapture::$name . '_rpx_share_providers', $result['shareProviders']);
-            }
+        $this->postMessage = array('class'=>'updated','message'=>'Configuration Saved');
+        if ($key) {
+          JanrainCapture::update_option(JanrainCapture::$name . '_rpx_api_key', $key);
+          $result = $api->rpx_lookup_rp();
+          if (isset($result['realm']) && isset($result['shareProviders'])) {
+            $realm = str_replace('.rpxnow.com', '', $result['realm']);
+            JanrainCapture::update_option(JanrainCapture::$name . '_rpx_realm', $realm);
+            JanrainCapture::update_option(JanrainCapture::$name . '_rpx_share_providers', $result['shareProviders']);
           }
         }
       } else {

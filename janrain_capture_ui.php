@@ -102,7 +102,7 @@ class JanrainCaptureUi {
         if($sso_enabled && $sso_addr) {
           //TODO: shorthand function
           $logout = wp_logout_url($this->current_page_url());
-          $href = "javascript:authDelegate.logout(); JANRAIN.SSO.CAPTURE.logout({ sso_server: 'https://$sso_addr', logout_uri: '$logout' });";
+          $href = "javascript:JANRAIN.SSO.CAPTURE.logout({ sso_server: 'https://$sso_addr', logout_uri: '$logout' });";
         } else { $href = wp_logout_url($this->current_page_url()); }
         $link = preg_replace("/href=[\"'][^\"']+[\"']/i", "href=\"$href\"", $link);
       }
@@ -113,7 +113,7 @@ class JanrainCaptureUi {
         $href = wp_logout_url($this->current_page_url()); // urlencode(wp_make_link_relative(get_option('siteurl')));
       }
       $link = preg_replace("/href=[\"'][^\"']+[\"']/i", "href=\"$href\"", $link);
-      $link = str_ireplace(">", " onclick=\"authDelegate.logout(); janrain.capture.ui.endCaptureSession();\" >", $link);
+      $link = str_ireplace(">", " onclick=\"janrain.capture.ui.endCaptureSession();\" >", $link);
     }
     return $link;
   }
@@ -401,7 +401,10 @@ function janrainSignOut(){
     janrain.settings.capture.captureServer = '{$settings["capture.captureServer"]}';
     janrain.settings.capture.registerFlow = '{$settings["capture.registerFlow"]}';
     janrain.settings.packages = ['$janrain_packages'];
-    janrain.settings.capture.recaptchaPublicKey = '{$settings["capture.recaptchaPublicKey"]}';
+    
+    janrain.settings.capture.setProfileCookie = true;
+    janrain.settings.capture.keepProfileCookieAfterLogout = true;
+    janrain.settings.capture.setProfileData = true;
     
     // styles
     janrain.settings.capture.stylesheets = [{$settings["capture.stylesheets"]}];
@@ -417,8 +420,16 @@ WIDGETCAPTURE;
       janrain.settings.capture.conditionalIEStylesheets = '<?php echo $settings["capture.conditionalIEStylesheets"] ?>';
     <?php }
     
+    if($settings["capture.recaptchaPublicKey"] != '') {
+    echo "
+    
+    // captcha
+    janrain.settings.capture.recaptchaPublicKey = '{$settings["capture.recaptchaPublicKey"]}'";
+    }
+
     if(in_array("login",$settings["capture.packages"])){ ?>
  
+
     // engage settings
     janrain.settings.appUrl = '<?php echo $settings["appUrl"] ?>';
     janrain.settings.tokenAction = 'event';
@@ -444,7 +455,9 @@ WIDGETCAPTURE;
       janrain.settings.capture.federateLogoutUri = '<?php echo $settings["capture.federateLogoutUri"] ?>';
     <?php }
 
+    if(JanrainCapture::get_option(JanrainCapture::$name . '_widget_fsui_enabled')) {
 include_once $this->ifolder.'/settings.php';
+    }
     
     echo <<<WIDGETFINISH
     
@@ -491,4 +504,3 @@ WIDGETFINISH;
     include_once $url;
   }
 }
-

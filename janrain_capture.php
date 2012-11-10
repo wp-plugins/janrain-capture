@@ -72,7 +72,7 @@ if (!class_exists('JanrainCapture')) {
       $code = $_REQUEST['code'];
       if (!ctype_alnum($code))
         throw new Exception('Janrian Capture: received code was not valid');
-      $origin = $_REQUEST['origin'];
+      $origin = isset($_REQUEST['origin']) ? $_REQUEST['origin'] : '';
       do_action(self::$name . '_redirect_uri_start', $code, $origin);
       $redirect_args = array(
         'action' => self::$name . '_redirect_uri',
@@ -89,7 +89,10 @@ if (!class_exists('JanrainCapture')) {
           // Lookup user based on returned uuid
           $blog_id = (is_multisite()) ? 1 : $GLOBALS['blog_id'];
           $exists = get_users(array('blog_id' => $blog_id, 'meta_key' => self::$name . '_uuid', 'meta_value' => $user_entity['uuid']));
-          if (count($exists)<1) {
+          if(count($exists)<1) {  
+	    $exists = get_users(array('blog_id' => $blog_id, 'meta_key' => 'nickname', 'meta_value' => $user_entity['uuid'])); 
+	  }
+	  if (count($exists)<1) {
             $user_attrs = array();
             $user_attrs['user_pass'] = wp_generate_password($length=12, $include_standard_special_chars=false);
             if (self::get_option(self::$name . '_user_email'))
@@ -102,6 +105,7 @@ if (!class_exists('JanrainCapture')) {
               $user_attrs['display_name'] = esc_sql($this->get_field(self::get_option(self::$name . '_user_display_name'), $user_entity));
             $user_id = wp_insert_user($user_attrs);
             if (is_wp_error($user_id))
+              echo $user_id->get_error_message();
               throw new Exception($user_id->get_error_message());
             if (!add_user_meta($user_id, self::$name . '_uuid', $user_entity['uuid'], true))
               throw new Exception('Janrain Capture: Failed to set uuid on new user');
@@ -213,7 +217,12 @@ RDIR;
     function widget_profile() {
       $current_user = wp_get_current_user();
       if (!$current_user->ID)
-        return "Please login first.";
+        throw new Exception('Janrain Capture: user not logged in');
+
+      $method = isset($_REQUEST['method']) ? $_REQUEST['method'] : '';
+      $callback = isset($_REQUEST['callback']) ? $_REQUEST['callback'] : 'CAPTURE.closeProfile';
+      $expires = get_user_meta($current_user->ID, self::$name . '_expires', true);
+      
       if ($expires && time() >= $expires) {
         $api = new JanrainCaptureApi();
         if ($api->refresh_access_token() === false)
@@ -279,9 +288,8 @@ RDIR;
         if (self::get_option(self::$name . '_user_display_name'))
           $user_attrs['display_name'] = esc_sql($this->get_field(self::get_option(self::$name . '_user_display_name'), $user_entity));
         $userdata = wp_update_user($user_attrs);
-        $results[] = ($userdata->ID > 0);
+        $results[] = !($userdata > 0);
       }
-
       $metas = array('first_name', 'last_name', 'url', 'aim', 'yim', 'jabber', 'description');
       foreach($metas as $meta) {
         $key = self::get_option(self::$name . '_user_' . $meta);
@@ -571,4 +579,3 @@ XDCOMM;
 
 $capture = new JanrainCapture;
 $capture->init();
-
