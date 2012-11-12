@@ -24,9 +24,16 @@ class JanrainCaptureAPI {
    */
   function __construct() {
     $this->args = array();
-    $this->args['client_id'] = JanrainCapture::get_option(JanrainCapture::$name . '_client_id');
-    $this->args['client_secret'] = JanrainCapture::get_option(JanrainCapture::$name . '_client_secret');
-    $this->capture_addr = JanrainCapture::get_option(JanrainCapture::$name . '_address');
+    if (JanrainCapture::get_option(JanrainCapture::$name . '_ui_type') == "Capture 1.0") {
+      $this->args['client_id'] = JanrainCapture::get_option(JanrainCapture::$name . '_client_id');
+      $this->args['client_secret'] = JanrainCapture::get_option(JanrainCapture::$name . '_client_secret');
+      $this->capture_addr = "https://" . JanrainCapture::get_option(JanrainCapture::$name . '_address');
+    } elseif (JanrainCapture::get_option(JanrainCapture::$name . '_ui_type') == "Capture 2.0") {
+      $this->args['client_id'] = JanrainCapture::get_option(JanrainCapture::$name . '_widget_client_id');
+      $this->args['client_secret'] = JanrainCapture::get_option(JanrainCapture::$name . '_widget_client_secret');
+      $this->capture_addr = JanrainCapture::get_option(JanrainCapture::$name . '_widget_address');
+      
+    }
   }
 
   /**
@@ -43,7 +50,7 @@ class JanrainCaptureAPI {
    */
   protected function call($command, $arg_array = null, $access_token = null) {
 
-    $url = "https://" . $this->capture_addr . "/$command";
+    $url = $this->capture_addr . "/$command";
 
     $headers = array();
     if (isset($access_token))
@@ -128,18 +135,25 @@ class JanrainCaptureAPI {
    */
   public function new_access_token($auth_code, $redirect_uri) {
     $command = "oauth/token";
-    $arg_array = array('code' => $auth_code,
-      'redirect_uri' => $redirect_uri,
-      'grant_type' => 'authorization_code'
-    );
-
+    if(JanrainCapture::get_option(JanrainCapture::$name . '_ui_type') == "Capture 2.0") {
+      $arg_array = array('code' => $auth_code,
+        'redirect_uri' => $redirect_uri,
+        'grant_type' => 'authorization_code',
+        'client_id' => JanrainCapture::get_option(JanrainCapture::$name . '_widget_client_id'),
+        'client_secret' => JanrainCapture::get_option(JanrainCapture::$name . '_widget_client_secret')
+      );
+    } else {
+      $arg_array = array('code' => $auth_code,
+        'redirect_uri' => $redirect_uri,
+        'grant_type' => 'authorization_code',
+      );
+    }
     $json_data = $this->call($command, $arg_array);
     if ($json_data) {
       $this->update_capture_token($json_data);
       do_action(JanrainCapture::$name . '_new_access_token', $json_data);
       return true;
     }
-
     return false;
   }
 
