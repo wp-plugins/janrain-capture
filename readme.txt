@@ -35,18 +35,13 @@ Capture registration enables customers to match registration screens to their si
 **Self-service account management**
 Capture provides users and customers alike with reliable, self-service features for password reset and account deactivation or deletion. In addition, users can access a profile management form to add additional identity providers, update their user profile, or change their on-site privacy settings.
 
-=Advanced Registration Features=
+**Advanced Registration Features**
 In addition, Capture supports websites with advanced features for sites and users:
-* TOS acceptance or subscription opt-in.
-* CAPTCHA verification.
-* Dirty word filter.
-* Mobile optimizations and SDKs for native applications.
-* Event hooks for 3rd party analytics.
-
-[About Janrain Capture](http://janrain.com/products/capture/)
-
-For technical documentation please refer to
-[http://developers.janrain.com/documentation/capture/](http://developers.janrain.com/documentation/capture/)
+*TOS acceptance or subscription opt-in.
+*CAPTCHA verification.
+*Dirty word filter.
+*Mobile optimizations and SDKs for native applications.
+*Event hooks for 3rd party analytics.
 
 == Installation ==
 Install through the Administration Panel or extract plugin archive in your plugin directory.
@@ -94,7 +89,6 @@ We set the initial link for this setting to the default WordPress sample page. S
 
 We also strongly recommend that you completely remove this page from the navigation menu. It is accessed through the “Edit My Profile” link in the Admin Bar for users who’ve been created through the Capture Service (that is, the default WordPress admin account will not have a Capture profile). 
 
-
 Styling Capture 2.0:
 If you have access to your WordPress server’s filesystem you can gain full control over how the widget is styled. (Note: This section of settings is hidden until you enable Filesystem Mode on the UI Settings tab).
 
@@ -102,3 +96,8 @@ The latest version of the plugin contains a folder called /janrain_capture_scree
 Once in place, use the built-in Wordpress plugin editor to make modifications to your Capture screens.
 
 Note: You may also host this folder remotely on another server with PHP 5.2+ support, and change the folder under Filesystem Mode Settings.
+
+[About Janrain Capture](http://janrain.com/products/capture/)
+
+For technical documentation please refer to
+[http://developers.janrain.com/documentation/capture/](http://developers.janrain.com/documentation/capture/)
