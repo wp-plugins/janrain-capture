@@ -80,27 +80,3 @@ As of version 0.0.4, this plugin supports Engage Social Sharing through the Enga
 This plugin fully supports WordPress Multisite. To install, proceed as above, however you must Network Enable this plugin. The Janrain Capture administration menu will appear on the Network Admin dashboard.
 
 Individual blogs can be updated with separate UI settings and a different Client ID through the Janrain Capture administration menu in each blog's dashboard. If no changes are made they will default to the network admin settings.
-
-== Capture 2.0 Setup ==
-As of version 0.2.0 of the plugin, Capture 2.0 integration is available. This is provided for customers using the latest widget version of Capture. If you are not using the Capture Widget, an upgrade path will be available in upcoming releases.
-
-= Activating Capture 2.0: =
-1.  Log in to your WordPress Administrator Dashboard.
-1.  Navigate to Dashboard > Janrain Capture.
-1.  A new UI Type field has been added. Change the UI Type to Capture 2.0 and click save.
-1.  Capture 2.0 settings are configured in the 2.0 Settings and UI Settings tabs. Any existing Capture 1.0 settings will be preserved and hidden until you change the UI Type back. 
-
-= Configuring Capture 2.0: =
-The Edit Profile page for Capture 2.0 requires creating a new WordPress page and adding only the following shortcode to it: [janrain_capture action="edit_profile"] 
-
-We set the initial link for this setting to the default WordPress sample page. So if you are trying this out on a new WordPress installation you can just edit that page, and replace the text with shortcode.
-
-We also strongly recommend that you completely remove this page from the navigation menu. It is accessed through the "Edit My Profile" link in the Admin Bar for users who've been created through the Capture Service (that is, the default WordPress admin account will not have a Capture profile). 
-
-= Styling Capture 2.0: =
-If you have access to your WordPress server's filesystem you can gain full control over how the widget is styled. (Note: This section of settings is hidden until you enable Filesystem Mode on the UI Settings tab).
-
-The latest version of the plugin contains a folder called /janrain_capture_screens/ inside the wp-content/plugins/janrain_capture/ folder. Copy the /janrain_capture_screens/ folder to the /wp-content/plugins/ folder. This creates a local backup, and working in this folder prevents plugin updates from overwriting custom screen styles. This is also the default location of the screens folder in Filesystem Mode. 
-Once in place, use the built-in Wordpress plugin editor to make modifications to your Capture screens.
-
-Note: You may also host this folder remotely on another server with PHP 5.2+ support, and change the folder under Filesystem Mode Settings.
