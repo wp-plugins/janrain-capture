@@ -1,8 +1,8 @@
-=== Janrain Capture ===
+=== Social User Registration and Profile Storage with Janrain Capture ===
 Contributors: bhamrick, rwright, JeremyJanrain
 Tags: capture, janrain, sso
 Requires at least: 3.0
-Tested up to: 3.3
+Tested up to: 3.4.2
 License: APL
 Stable tag: trunk
 
@@ -96,11 +96,3 @@ The Edit Profile page for Capture 2.0 requires creating a new WordPress page and
 We set the initial link for this setting to the default WordPress sample page. So if you are trying this out on a new WordPress installation you can just edit that page, and replace the text with shortcode.
 
 We also strongly recommend that you completely remove this page from the navigation menu. It is accessed through the "Edit My Profile" link in the Admin Bar for users who've been created through the Capture Service (that is, the default WordPress admin account will not have a Capture profile). 
-
-= Styling Capture 2.0: =
-If you have access to your WordPress server's filesystem you can gain full control over how the widget is styled. (Note: This section of settings is hidden until you enable Filesystem Mode on the UI Settings tab).
-
-The latest version of the plugin contains a folder called /janrain_capture_screens/ inside the wp-content/plugins/janrain_capture/ folder. Copy the /janrain_capture_screens/ folder to the /wp-content/plugins/ folder. This creates a local backup, and working in this folder prevents plugin updates from overwriting custom screen styles. This is also the default location of the screens folder in Filesystem Mode. 
-Once in place, use the built-in Wordpress plugin editor to make modifications to your Capture screens.
-
-Note: You may also host this folder remotely on another server with PHP 5.2+ support, and change the folder under Filesystem Mode Settings.
