@@ -2,8 +2,8 @@
   visibility: hidden;
 }
 
-#janrainModal, #janrainModalOverlay {
-  z-index: 9999;
+#janrain-share, #janrainModal, #janrainModalOverlay {
+    z-index: 99999 !important;
 }
 
 #janrainModal .janrain_modal_closebutton {
