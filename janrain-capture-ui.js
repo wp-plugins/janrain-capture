@@ -8,26 +8,28 @@ jQuery(function(){
       }
     }
   }
-  jQuery(".janrain_capture_anchor").colorbox({
-    iframe: true,
-    width: function() {
-      if (jQuery(this).attr('rel'))
-        return parseDim(jQuery(this).attr('rel'), 'width');
-      else
-        return '700px';
-    },
-    height: function() {
-      if (jQuery(this).attr('rel'))
-        return parseDim(jQuery(this).attr('rel'), 'height');
-      else
-        return '700px';
-    },
-    scrolling: false,
-    overlayClose: false,
-    current: '',
-    next: '',
-    previous: ''
-  });
+  var jcbo = {
+	    iframe: true,
+	    width: function() {
+	      if (jQuery(this).attr('rel'))
+	        return parseDim(jQuery(this).attr('rel'), 'width');
+	      else
+	        return '700px';
+	    },
+	    height: function() {
+	      if (jQuery(this).attr('rel'))
+	        return parseDim(jQuery(this).attr('rel'), 'height');
+	      else
+	        return '700px';
+	    },
+	    scrolling: false,
+	    overlayClose: false,
+	    current: '',
+	    next: '',
+	    previous: ''
+	  };
+  jQuery("#wp-admin-bar-my-account a:not('#wp-admin-bar-logout a')").colorbox(jcbo);
+  jQuery(".janrain_capture_anchor").colorbox(jcbo);
 });
 
 var CAPTURE = {
@@ -64,7 +66,7 @@ var CAPTURE = {
       url: ajaxurl,
       method: 'POST',
       data: {
-        action: 'janrain_capture_profile_update',
+        action: 'janrain_capture_profile_update'
       },
       success: function(data) {
         if (data == '1') {
