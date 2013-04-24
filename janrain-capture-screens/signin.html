@@ -1,38 +1,3 @@
-<script type="text/javascript">
-// set the flow name for this screen here
-janrain.settings.capture.flowName = 'demoFlow';
-
-// adjust the auth widget to fit
-janrain.settings.width = 320;
-
-// call our code/token exchanger, and use the token to set up a capture session
-function getTokenForCode(code, redirect_uri) {
-	  var url;
-		url = janrain.settings.capture.redirectUri;
-		url += "&code=" + code;
-		window.location.href = url;
-}
-function janrainCaptureWidgetOnLoad() {
-    function handleCaptureLogin(result) {
-
-        console.log ("exchanging code for token...");
-        getTokenForCode(result.authorizationCode, janrain.settings.capture.redirectUri);
-    }
-    janrain.events.onCaptureSessionFound.addHandler(function(result){
-	    console.log ("capture session found");
-	    janrainSignOut();
-    });
-
-    janrain.events.onCaptureSessionNotFound.addHandler(function(result){
-	    //console.log ("capture session not found");
-    });
-
-    janrain.events.onCaptureLoginSuccess.addHandler(handleCaptureLogin);
-    janrain.events.onCaptureRegistrationSuccess.addHandler(handleCaptureLogin);
-
-    janrain.capture.ui.start();
-}
-</script>
 <div style="display:none;" id="signIn">
     <div class="capture_header">
         <h1>Sign Up / Sign In</h1>
