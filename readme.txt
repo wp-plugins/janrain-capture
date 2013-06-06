@@ -2,7 +2,7 @@
 Contributors: bhamrick, rwright, jeremyjanrain, byron-janrain
 Tags: capture, janrain, sso
 Requires at least: 3.0
-Tested up to: 3.1
+Tested up to: 3.5.1
 License: APL
 
 Social User Registration and Profile Storage with Janrain Capture
