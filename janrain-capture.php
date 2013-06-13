@@ -77,6 +77,10 @@ if ( ! class_exists( 'JanrainCapture' ) ) {
 			$url_type = isset( $_REQUEST['url_type'] )
 				? $_REQUEST['url_type']
 				: false;
+			if ( $url_type && (! ctype_alnum( str_replace( '-', '', $url_type ) ) ) ) {
+				header( 'HTTP/1.1 400 Bad Request' );
+				exit;
+			}
 			if ( isset( $_REQUEST['verification_code'] ) ) {
 				$url_type = 'verify';
 				$code = $_REQUEST['verification_code'];

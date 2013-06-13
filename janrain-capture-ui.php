@@ -262,6 +262,7 @@ $legacy_share
 function setShare(url, title, desc, img, provider) {
 	janrain.engage.share.setUrl(url);
 	janrain.engage.share.setTitle(title);
+	janrain.engage.share.setMessage(title);
 	janrain.engage.share.setDescription(desc);
 	janrain.engage.share.setImage(img);
 	janrain.engage.share.showProvider(provider);
@@ -478,7 +479,6 @@ WIDGETCAPTURE;
 			// engage settings
 			janrain.settings.appUrl = '<?php echo $settings['appUrl'] ?>';
 			janrain.settings.tokenAction = 'event';
-			janrain.settings.providers =['google', 'twitter', 'facebook', 'linkedin'];
 			<?php
 		}
 
@@ -501,8 +501,6 @@ WIDGETCAPTURE;
 			janrain.settings.capture.federateLogoutUri = '<?php echo $settings['capture.federateLogoutUri'] ?>';
 			<?php
 		}
-
-		include_once $this->ifolder . '/settings.php';
 
 		echo <<<WIDGETFINISH
 
