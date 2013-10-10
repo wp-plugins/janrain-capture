@@ -1,10 +1,10 @@
 === Janrain Capture ===
-Contributors: bhamrick, rwright, jeremyjanrain, byron-janrain
+Contributors: byron-janrain, rebekahgolden, kylerohr, bhamrick, rwright, jeremyjanrain
 Tags: capture, janrain, sso
-Requires at least: 3.2
-Tested up to: 3.5.1
+Requires at least: 3.5
+Tested up to: 3.6.1
 License: APL
-Stable tag: 0.2.2
+Stable tag: 0.2.3
 
 Social User Registration and Profile Storage with Janrain Capture
 

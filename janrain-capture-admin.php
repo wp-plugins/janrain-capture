@@ -18,27 +18,6 @@ class JanrainCaptureAdmin {
 	 */
 	function  __construct() {
 		$path = dirname( __FILE__ ) . '/janrain-capture-screens/';
-
-		$signin = JanrainCapture::get_option( JanrainCapture::$name . '_widget_auth_screen' );
-		$signin = $signin ? $signin : 'signin.html';
-		$signin = $path . $signin;
-		$signin = wp_remote_request( $signin );
-
-		$editp  = JanrainCapture::get_option( JanrainCapture::$name . '_widget_edit_screen' );
-		$editp  = $editp ? $editp : 'edit-profile.html';
-		$editp  = $path . $editp;
-		$editp  = wp_remote_request( $editp );
-
-		$forgotp = JanrainCapture::get_option( JanrainCapture::$name . '_widget_forgot_screen' );
-		$forgotp = $forgotp ? $forgotp : 'forgot.html';
-		$forgotp = $path . $forgotp;
-		$forgotp = wp_remote_request( $forgotp );
-
-		$verifyp = JanrainCapture::get_option( JanrainCapture::$name . '_widget_verify_screen' );
-		$verifyp = $verifyp ? $verifyp : 'verify.html';
-		$verifyp = $path . $verifyp;
-		$verifyp = wp_remote_request( $verifyp );
-
 		$site_url = site_url();
 		$this->postMessage = array( 'class' => '', 'message' => '' );
 		$this->fields = array(
@@ -262,14 +241,6 @@ class JanrainCaptureAdmin {
 				'screen' => 'main',
 			),
 			array(
-				'name' => JanrainCapture::$name . '_widget_recaptcha_pk',
-				'title' => 'Recaptcha Public Key',
-				'description' => 'Your Recaptcha Public Key',
-				'default' => '6LeVKb4SAAAAAGv-hg5i6gtiOV4XrLuCDsJOnYoP',
-				'type' => 'long-text',
-				'screen' => 'widget',
-			),
-			array(
 				'name' => JanrainCapture::$name . '_widget_federate',
 				'title' => 'Federate Settings',
 				'type' => 'title',
@@ -322,6 +293,15 @@ class JanrainCaptureAdmin {
 				'screen' => 'widget',
 			),
 			array(
+				'name' => JanrainCapture::$name . '_widget_bp_server_base_url',
+				'title' => 'Server Base URL',
+				'description' => 'Your Backplane Server Base URL',
+				'prefix' => 'https://',
+				'default' => '',
+				'type' => 'text',
+				'screen' => 'widget',
+			),
+			array(
 				'name' => JanrainCapture::$name . '_widget_bp_bus_name',
 				'title' => 'Bus Name',
 				'description' => 'Your Backplane Bus Name',
@@ -343,18 +323,9 @@ class JanrainCaptureAdmin {
 			array(
 				'name' => JanrainCapture::$name . '_widget_load_js',
 				'title' => 'Url for load.js file',
-				'description' => 'The absolute url (minus protocol) of the Widget load.js file <br/>(example: d16s8pqtk4uodx.cloudfront.net/default/load.js)',
-				'default' => 'd16s8pqtk4uodx.cloudfront.net/default/load.js',
+				'description' => 'The absolute url (minus protocol) of the Widget load.js file <br/>(example: d16s8pqtk4uodx.cloudfront.net/load-default)',
+				'default' => '',
 				'required' => true,
-				'type' => 'text',
-				'screen' => 'widgetui',
-			),
-			array(
-				'name' => JanrainCapture::$name . '_widget_reg_flow',
-				'title' => 'Registration Flow',
-				'description' => 'Change this only when instructed to do so (default: socialRegistration)',
-				'required' => true,
-				'default' => 'socialRegistration',
 				'type' => 'text',
 				'screen' => 'widgetui',
 			),
@@ -727,7 +698,7 @@ FOOTER;
 				<tr>
 					<th><label for="{$field['name']}">{$field['title']}$r</label></th>
 					<td>
-						<input type="text" name="{$field['name']}" value="$value" style="width:200px" />
+						{$field['prefix']}<input type="text" name="{$field['name']}" value="$value" style="width:200px" />
 						<span class="description">{$field['description']}</span>
 					</td>
 				</tr>

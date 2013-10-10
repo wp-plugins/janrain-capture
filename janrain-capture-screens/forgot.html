@@ -2,13 +2,13 @@
     <div class="capture_header">
         <h1>Change password</h1>
     </div>
-    {* resetPasswordForm *}
+    {* newPasswordForm *}
         {* newpassword *}
         {* newpasswordConfirm *}
         <div class="capture_footer">
             {* submitButton *}
         </div>
-    {* /resetPasswordForm *}
+    {* /newPasswordForm *}
 </div>
 <div style="display:none;" id="resetPasswordSuccess">
     <div class="capture_header">
@@ -16,7 +16,7 @@
     </div>
     <p>Password has been successfully updated.</p>
     <div class="capture_footer">
-        <a href="./.." class="capture_btn capture_primary">Sign in</a>
+        <a href="index.html" class="capture_btn capture_primary">Sign in</a>
     </div>
 </div>
 <div style="display:none;" id="resetPasswordRequestCode">
@@ -24,19 +24,19 @@
         <h1>Create a new password</h1>
     </div>
     <p>We didn't recognize that password reset code. Enter your email address to get a new one.</p>
-    {* #resetPasswordRequestForm *}
+    {* #resetPasswordForm *}
         {* traditionalSignIn_emailAddress *}
         <div class="capture_footer">
             {* forgotPassword_sendButton *}
         </div>
-    {* /resetPasswordRequestForm *}
+    {* /resetPasswordForm *}
 </div>
 <div style="display:none;" id="resetPasswordRequestCodeSuccess">
     <div class="capture_header">
         <h1>Create a new password</h1>
     </div>
-      <p>We've sent an email with instructions to create a new password. Your existing password has not been changed.</p>
+        <p>We've sent an email with instructions to create a new password. Your existing password has not been changed.</p>
     <div class="capture_footer">
-        <a href="./.." class="capture_btn capture_primary">Close</a>
+        <a href="#" onclick="janrain.capture.ui.modal.close()" class="capture_btn capture_primary">Close</a>
     </div>
 </div>

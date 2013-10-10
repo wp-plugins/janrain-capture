@@ -58,7 +58,7 @@ class JanrainCaptureUi {
 	 */
 	function register_scripts() {
 		$captureName = JanrainCapture::$name;
-		$pluginDirUrl = plugin_dir_url( __FILE__ );
+		$pluginDirUrl = untrailingslashit( plugin_dir_url( __FILE__ ) );
 		wp_enqueue_script( 'json2' );
 		wp_enqueue_script( 'localstorage-polyfill',  "$pluginDirUrl/localstorage-polyfill.js" );
 
@@ -231,9 +231,9 @@ class JanrainCaptureUi {
 	e.id = 'janrainWidgets';
 
 	if (document.location.protocol === 'https:') {
-		e.src = 'https://rpxnow.com/js/lib/$realm/widget.js';
+		e.src = 'https://rpxnow.com/load/$realm';
 	} else {
-		e.src = 'http://widget-cdn.rpxnow.com/js/lib/$realm/widget.js';
+		e.src = 'http://widget-cdn.rpxnow.com/load/$realm';
 	}
 
 	var s = document.getElementsByTagName('script')[0];
@@ -384,12 +384,9 @@ SSO;
 		$settings['capture.redirectUri']   = admin_url( 'admin-ajax.php' ) . '?action=' . JanrainCapture::$name . '_redirect_uri';
 		$settings['capture.appId']         = JanrainCapture::get_option( JanrainCapture::$name . '_widget_app_id' );
 		$settings['capture.clientId']      = JanrainCapture::get_option( JanrainCapture::$name . '_widget_client_id' );
-		$settings['capture.responseType']  = 'code';
 		$settings['capture.captureServer'] = JanrainCapture::get_option( JanrainCapture::$name . '_widget_address' );
-		$settings['capture.registerFlow']  = JanrainCapture::get_option( JanrainCapture::$name . '_widget_reg_flow' );
 		$settings['capture.packages']      = JanrainCapture::get_option( JanrainCapture::$name . '_widget_packages' );
 		$janrain_packages = implode( "','", $settings['capture.packages'] );
-		$settings['capture.recaptchaPublicKey'] = JanrainCapture::get_option( JanrainCapture::$name . '_widget_recaptcha_pk' );
 		$settings['capture.loadJsUrl']          = JanrainCapture::get_option( JanrainCapture::$name . '_widget_load_js' );
 
 		// engage
@@ -403,6 +400,7 @@ SSO;
 
 		// backplane
 		$settings['capture.backplane']        = JanrainCapture::get_option( JanrainCapture::$name . '_widget_backplane_enabled' );
+		$settings['capture.backplaneServerBaseUrl'] = JanrainCapture::get_option( JanrainCapture::$name . '_widget_backplane_server_base_url' );
 		$settings['capture.backplaneBusName'] = JanrainCapture::get_option( JanrainCapture::$name . '_widget_bp_bus_name' );
 		$settings['capture.backplaneVersion'] = JanrainCapture::get_option( JanrainCapture::$name . '_bp_version' );
 
@@ -429,8 +427,12 @@ SSO;
 					}
 				}
 			}
+		} elseif ( $url = JanrainCapture::get_option( 'janrain_capture_widget_css_file' ) ) {
+			//old installs may have been able to set this option manually.
+			$settings['capture.stylesheets'] = "'{$url}'";
 		} else {
-			$settings['capture.stylesheets'] = "'" . JanrainCapture::get_option( JanrainCapture::$name . '_widget_css_file' ) . "'";
+			//default
+			$settings['capture.stylesheets'] = "'{$this->ifolder}/stylesheets/janrain.css'";
 		}
 
 		echo <<<WIDGETCAPTURE
@@ -447,9 +449,9 @@ function janrainSignOut(){
 		janrain.settings.capture.redirectUri = '{$settings["capture.redirectUri"]}';
 		janrain.settings.capture.appId= '{$settings["capture.appId"]}';
 		janrain.settings.capture.clientId = '{$settings["capture.clientId"]}';
-		janrain.settings.capture.responseType = '{$settings["capture.responseType"]}';
+		janrain.settings.capture.responseType = 'code';
 		janrain.settings.capture.captureServer = '{$settings["capture.captureServer"]}';
-		janrain.settings.capture.registerFlow = '{$settings["capture.registerFlow"]}';
+		janrain.settings.capture.registerFlow = 'socialRegistration';
 		janrain.settings.packages = ['$janrain_packages'];
 
 		janrain.settings.capture.setProfileCookie = true;
@@ -470,9 +472,7 @@ WIDGETCAPTURE;
 			echo "\njanrain.settings.capture.conditionalIEStylesheets = '{$settings['capture.conditionalIEStylesheets']}';";
 		}
 
-		if ( $settings['capture.recaptchaPublicKey'] != '' ) {
-			echo "\njanrain.settings.capture.recaptchaPublicKey = '{$settings['capture.recaptchaPublicKey']}'; //captcha";
-		}
+		echo "\njanrain.settings.capture.recaptchaPublicKey = '6LeVKb4SAAAAAGv-hg5i6gtiOV4XrLuCDsJOnYoP'; //captcha";
 
 		if ( in_array( 'login', $settings['capture.packages'] ) ) {
 			?>
@@ -492,6 +492,12 @@ WIDGETCAPTURE;
 			<?php
 		}
 
+		if (isset($settings['capture.backplaneServerBaseUrl']) && $settings['capture.backplaneServerBaseUrl'] != '') {
+			?>
+			janrain.settings.capture.backplaneServerBaseUrl = 'https://<?php echo $settings['capture.backplaneServerBaseUrl']?>';
+			<?php
+		}
+
 		if ( $settings['capture.federate'] ) {
 			?>
 			// federate settings
@@ -503,7 +509,6 @@ WIDGETCAPTURE;
 		}
 
 		echo <<<WIDGETFINISH
-
 		function isReady() { janrain.ready = true; };
 		if (document.addEventListener) {
 				document.addEventListener("DOMContentLoaded", isReady, false);
@@ -546,7 +551,7 @@ WIDGETFINISH;
 		if ( $ver == 1.2 ) {
 			echo <<<BACKPLANE2
 <script type="text/javascript">
- function setup_bp() {
+function setup_bp() {
 	/*
 	 * Initialize Backplane:
 	 * This creates a channel and adds a cookie for the channel.
@@ -569,7 +574,6 @@ function bp_ready() {
 		return false;
 	}
 }
-
 setup_bp();
 </script>
 BACKPLANE2;
@@ -579,12 +583,14 @@ BACKPLANE2;
 	function sign_in_screen_js() {
 		$url = $this->ifolder . '/';
 		$file = JanrainCapture::get_option( JanrainCapture::$name . '_widget_auth_screen' );
-		$file_js = preg_replace('"\.(php|html|htm)$"', '.js', $file);
+		$url .= preg_replace('"\.(php|html|htm)$"', '.js', $file);
 		echo '<script type="text/javascript">';
 		if ( $this->local ) {
-			include_once $url . $file_js;
+			include_once $url;
 		} else {
-			wp_remote_request( $url . $file_js );
+			$resp = wp_remote_get( $url );
+			$out = wp_remote_retrieve_body( $resp );
+			echo $out ?: sprintf( 'Janrain: Unable to load %s', $url );
 		}
 		echo '</script>';
 	}
@@ -595,29 +601,35 @@ BACKPLANE2;
 		if ( $this->local ) {
 			include_once $url;
 		} else {
-			echo wp_remote_request( $url );
+			$resp = wp_remote_get( $url );
+			$out = wp_remote_retrieve_body( $resp );
+			echo $out ?: sprintf( 'Janrain: Unable to load %s', $url );
 		}
 	}
 
 	function edit_screen() {
-			$url  = $this->ifolder . '/';
-			$url .= JanrainCapture::get_option( JanrainCapture::$name . '_widget_edit_screen' );
-			if ( $this->local ) {
-				include_once $url;
-			} else {
-				echo wp_remote_request( $url );
-			}
+		$url  = $this->ifolder . '/';
+		$url .= JanrainCapture::get_option( JanrainCapture::$name . '_widget_edit_screen' );
+		if ( $this->local ) {
+			include_once $url;
+		} else {
+			$resp = wp_remote_get( $url );
+			$out = wp_remote_retrieve_body( $resp );
+			echo $out ?: sprintf( 'Janrain: Unable to load %s', $url );
+		}
 	}
 
 	function edit_screen_js() {
 		$url = $this->ifolder . '/';
 		$file = JanrainCapture::get_option( JanrainCapture::$name . '_widget_edit_screen' );
-		$file_js = preg_replace( '"\.(php|html|htm)$"', '.js', $file );
+		$url .= preg_replace( '"\.(php|html|htm)$"', '.js', $file );
 		echo '<script type="text/javascript">';
 		if ( $this->local ) {
-			include_once $url . $file_js;
+			include_once $url;
 		} else {
-			echo wp_remote_request( $url . $file_js );
+			$resp = wp_remote_get( $url );
+			$out = wp_remote_retrieve_body( $resp );
+			echo $out ?: sprintf( 'Janrain: Unable to load %s', $url );
 		}
 		echo '</script>';
 	}

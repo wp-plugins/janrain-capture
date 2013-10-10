@@ -3,7 +3,7 @@
 Plugin Name: Janrain Capture
 Plugin URI: http://janrain.com/capture/
 Description: Collect, store and leverage user profile data from social networks in a flexible, lightweight hosted database.
-Version: 0.2.2
+Version: 0.2.3
 Author: Janrain
 Author URI: http://developers.janrain.com/extensions/wordpress-for-capture/
 License: Apache License, Version 2.0
@@ -19,14 +19,14 @@ if ( ! class_exists( 'JanrainCapture' ) ) {
 		public $basename;
 		public $url;
 		public static $name = 'janrain_capture';
-		private static $ui;
+		public static $ui;
 
 		/**
 		 * Initializes the plugin.
 		 */
 		function init() {
-			$this->path = plugin_dir_path( __FILE__ );
-			$this->url  = plugin_dir_url( __FILE__ );
+			$this->path = untrailingslashit( plugin_dir_path( __FILE__ ) );
+			$this->url  = untrailingslashit( plugin_dir_url( __FILE__ ) );
 
 			register_activation_hook( __FILE__, array( $this, 'activate' ) );
 			require_once $this->path . '/janrain-capture-api.php';
@@ -55,14 +55,14 @@ if ( ! class_exists( 'JanrainCapture' ) ) {
 				add_shortcode( 'janrain_share', array( $this, 'shortcode_share' ) );
 			}
 			require_once $this->path . '/janrain-capture-ui.php';
-			$this->ui = new JanrainCaptureUi();
+			self::$ui = new JanrainCaptureUi();
 		}
 
 		/**
 		 * Method bound to register_activation_hook.
 		 */
 		function activate() {
-			require_once plugin_dir_path( __FILE__ ) . '/janrain-capture-admin.php';
+			require_once dirname( __FILE__ ) . '/janrain-capture-admin.php';
 			$admin = new JanrainCaptureAdmin();
 			$admin->activate();
 		}
@@ -95,8 +95,6 @@ if ( ! class_exists( 'JanrainCapture' ) ) {
 			$origin = isset( $_REQUEST['origin'] )
 				? $_REQUEST['origin']
 				: '';
-			//This function, janrain_capture_redirect_uri_start(), doesn't exist so comment this out
-			// do_action( self::$name . '_redirect_uri_start', $code, $origin );
 			$redirect_args = array(
 				'action' => self::$name . '_redirect_uri',
 			);
@@ -190,7 +188,7 @@ if ( ! class_exists( 'JanrainCapture' ) ) {
 			}
 
 			$ui_type = self::get_option( self::$name . '_ui_type' );
-			echo <<<REDIRECT
+			echo <<<HTML
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 	 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" >
@@ -199,7 +197,7 @@ if ( ! class_exists( 'JanrainCapture' ) ) {
 	</head>
 	<body>
 		<script type="text/javascript">
-			if( '$ui_type' === 'Capture') {
+			if( '{$ui_type}' === 'Capture') {
 				if(localStorage) localStorage.setItem("janrainCaptureTokenWP", '$api->access_token')
 			// User Registration Widget flow
 				if ('$r' == 'window.top.location.href') {
@@ -226,7 +224,7 @@ if ( ! class_exists( 'JanrainCapture' ) ) {
 		</script>
 	</body>
 </html>
-REDIRECT;
+HTML;
 			die();
 		}
 
@@ -308,18 +306,17 @@ RDIR;
 				$js = $this->widget_get_screen( $url_type . '.js' );
 
 				echo <<<SCREEN
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-		"http://www.w3.org/1999/xhtml1/DTD/xhtml1-strict.dtd">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/1999/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" >
-		<head>
-				<title>Janrain Capture</title>
-				<script type="text/javascript">
-					{$widget_js}
-					{$js}
-				</script>
-		</head>
-		<body>
-			{$screen}
+<head>
+	<title>Janrain Capture</title>
+	<script type="text/javascript">
+		{$widget_js}
+		{$js}
+	</script>
+</head>
+<body>
+	{$screen}
 SCREEN;
 		}
 
@@ -333,13 +330,8 @@ SCREEN;
 				echo "Janrain Capture: No Widget screens folder specified in Janrain Capture Interface settings";
 				return false;
 			}
-			// consider using `wp_remote_get()` here
-			// http://codex.wordpress.org/Function_API/wp_remote_get
-			 $result = file_get_contents( $folder . $fname );
-			if ( ! $result ) {
-				$result = '';
-			}
-			return $result;
+			$resp = wp_remote_get( $folder . $name );
+			return wp_remote_retrieve_body( $resp );
 		}
 
 		/**
@@ -629,11 +621,11 @@ XDCOMM;
 				);
 				extract( shortcode_atts( $atts, $args ) );
 				$link        = '';
-				$url         = addslashes( htmlspecialchars( $url ) );
-				$description = addslashes( htmlspecialchars( $description ) );
-				$title       = addslashes( htmlspecialchars( $title ) );
-				$img         = addslashes( htmlspecialchars( $img ) );
-				$text        = htmlspecialchars( $text );
+				$url         = esc_js( esc_url( $url ) );
+				$description = esc_js( $description );
+				$title       = esc_js( $title );
+				$img         = esc_js( esc_url( $img ) );
+				$text        = $text;
 				$onclick     = "setShare('$url', '$title', '$description', '$img', this.getAttribute('rel'))";
 				if ( $icons  = self::social_icons( $onclick ) ) {
 					$link .= '<div class="janrain-share-container"><span class="janrain-share-text">' . $text . '</span>'.$icons.'</div>';
@@ -753,6 +745,7 @@ XDCOMM;
 
 add_action('init', 'janrain_capture_init_wrap');
 function janrain_capture_init_wrap() {
+	global $capture;
 	$capture = new JanrainCapture();
 	$capture->init();
 }

@@ -1,26 +1,31 @@
-<script type="text/javascript">
-janrain.settings.capture.flowName = 'plugins';
-janrain.settings.capture.modalCloseHtml = '';
-janrain.settings.capture.screenToRender = 'verifyEmail';
-</script>
-<div style="display: none" id="verifyEmail">    
-    <h2>Sorry we could not verify that email address.</h2>    
-    <p>Enter your email below and we will send you a new verification email:</p>    
-    {* #resendVerificationForm *}    
-      {* traditionalSignIn_emailAddress *}    
-      <div class="capture_footer">    
-      {* submitButton *}    
-      </div>    
-    {* /resendVerificationForm *}    
-</div>    
-<div style="display:none;" id="resendVerificationSuccess">    
-    <h2>New verification link sent.</h2>    
-    <p>Check your email for a new verification link.</p>    
-    <div class="capture_footer">    
-      <a href="./.." class="capture_btn capture_primary">Done</a>    
-    </div>    
-</div>    
-<div style="display: none" id="verifyEmailSuccess">    
-    <h2>Thanks for verifying your email address.</h2>    
-    <a href="./..">Done</a>    
+<div style="display:none;" id="verifyEmail">
+    <div class="capture_header">
+        <h1>Resend Email Verification</h1>
+    </div>
+    <p>Sorry we could not verify that email address. Enter your email below and we'll send you another email.</p>
+    {* #resendVerificationForm *}
+        {* traditionalSignIn_emailAddress *}
+        <div class="capture_footer">
+            {* submitButton *}
+        </div>
+     {* /resendVerificationForm *}
+</div>
+<div style="display:none;" id="resendVerificationSuccess">
+    <div class="capture_header">
+        <h1>Your Verification Email Has Been Sent</h1>
+    </div>
+    <div class="hr"></div>
+    <p>Check your email for a link to reset your password.</p>
+    <div class="capture_footer">
+        <a href="#" data-capturescreen="signIn" class="capture_btn capture_primary">Sign in</a>
+    </div>
+</div>
+<div style="display:none;" id="verifyEmailSuccess">
+    <div class="capture_header">
+        <h1>You did it!</h1>
+    </div>
+    <p>Thank you for verifiying your email address.
+    <div class="capture_footer">
+        <a href="index.html" class="capture_btn capture_primary">Sign in</a>
+    </div>
 </div>

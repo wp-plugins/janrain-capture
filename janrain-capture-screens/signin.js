@@ -9,7 +9,13 @@ function getTokenForCode(code, redirect_uri) {
 		url += "&code=" + code;
 		window.location.href = url;
 }
-
+function janrainReturnExperience() {
+	var span = document.getElementById('traditionalWelcomeName');
+	var name = janrain.capture.ui.getReturnExperienceData("displayName");
+	if (span && name) {
+		span.innerHTML = "Welcome back, " + name + "!";
+	}
+}
 function janrainCaptureWidgetOnLoad() {
     //check for access token in localStorage and create session
     if(localStorage && localStorage.getItem("janrainCaptureTokenWP")) {
@@ -31,9 +37,14 @@ function janrainCaptureWidgetOnLoad() {
 	janrain.events.onCaptureAccessDenied.addHandler(function(result){
 		janrain.capture.ui.createCaptureSession(access_token);
 	});
-
+	janrain.events.onCaptureScreenShow.addHandler(function(result){
+		if (result.screen == "returnTraditional") {
+			janrainReturnExperience();
+		}
+	});
     janrain.events.onCaptureLoginSuccess.addHandler(handleCaptureLogin);
     janrain.events.onCaptureRegistrationSuccess.addHandler(handleCaptureLogin);
 
     janrain.capture.ui.start();
+
 }
