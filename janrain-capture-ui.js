@@ -2,6 +2,8 @@ jQuery(function(){
   function parseDim(rel, dim) {
     var r = rel.split(';');
     for (var i in r) {
+      if ( !r.hasOwnProperty(i) || r[i].indexOf(':') === false )
+        continue;
       var k = r[i].split(':');
       if (k[0].indexOf(dim) > -1) {
         return k[1];

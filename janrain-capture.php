@@ -3,7 +3,7 @@
 Plugin Name: Janrain Capture
 Plugin URI: http://janrain.com/capture/
 Description: Collect, store and leverage user profile data from social networks in a flexible, lightweight hosted database.
-Version: 0.2.3
+Version: 0.2.4
 Author: Janrain
 Author URI: http://developers.janrain.com/extensions/wordpress-for-capture/
 License: Apache License, Version 2.0
@@ -102,7 +102,7 @@ if ( ! class_exists( 'JanrainCapture' ) ) {
 				$redirect_args['origin'] = $origin;
 			}
 
-			$redirect_uri = admin_url( 'admin-ajax.php' ) . '?' . http_build_query( $redirect_args, '', '&' );
+			$redirect_uri = admin_url( 'admin-ajax.php', '' ) . '?' . http_build_query( $redirect_args, '', '&' );
 			$api = new JanrainCaptureApi();
 			if ( $api->new_access_token( $code, $redirect_uri ) ) {
 				$user_entity = $api->load_user_entity();
@@ -172,7 +172,9 @@ if ( ! class_exists( 'JanrainCapture' ) ) {
 					if ( $api->password_recover === true ) {
 						wp_redirect( add_query_arg( array( 'janrain_capture_action' => 'password_recover' ), home_url() ) );
 					}
-					wp_set_auth_cookie( $user_id );
+					#set a compact privacy policy header; otherwise IE will refuse to set cookies from within an iframe
+					header('P3P: CP="NOI ADM DEV COM NAV OUR STP"');
+					wp_set_auth_cookie( $user_id, false, '' );
 				} else {
 					throw new Exception( 'Janrain Capture: Could not retrieve user entity' );
 				}
@@ -260,9 +262,9 @@ HTML;
 				throw new Exception( 'Janrain Capture: No user access token found' );
 			}
 			$args = array(
-				'redirect_uri' => admin_url( 'admin-ajax.php' ) . '?action=' . self::$name . '_redirect_uri',
+				'redirect_uri' => admin_url( 'admin-ajax.php', '' ) . '?action=' . self::$name . '_redirect_uri',
 				'client_id' => self::sanitize( self::get_option( self::$name . '_client_id' ) ),
-				'xd_receiver' => admin_url( 'admin-ajax.php' ) . '?action=' . self::$name . '_xdcomm',
+				'xd_receiver' => admin_url( 'admin-ajax.php', '' ) . '?action=' . self::$name . '_xdcomm',
 				'callback' => self::sanitize( $callback ),
 				'access_token' => $access_token,
 			);
@@ -543,7 +545,7 @@ XDCOMM;
 					$method = substr( $action, 7 );
 					$uargs['method'] = self::sanitize( $method );
 				}
-				$link  = admin_url( 'admin-ajax.php' ) . '?' . http_build_query( $uargs, '', '&' );
+				$link  = admin_url( 'admin-ajax.php', '' ) . '?' . http_build_query( $uargs, '', '&' );
 				$class = 'capture-auth';
 			} else {
 				if ( strpos( $action, 'signin' ) === 0 ) {
@@ -555,9 +557,9 @@ XDCOMM;
 				$link = 'https://' . $capture_addr . '/oauth/' . $action;
 				$args = array(
 					'response_type' => 'code',
-					'redirect_uri'  => admin_url( 'admin-ajax.php' ) . '?action=' . self::$name . '_redirect_uri',
+					'redirect_uri'  => admin_url( 'admin-ajax.php', '' ) . '?action=' . self::$name . '_redirect_uri',
 					'client_id'     => self::get_option( self::$name . '_client_id' ),
-					'xd_receiver'   => admin_url( 'admin-ajax.php' ) . '?action=' . self::$name . '_xdcomm',
+					'xd_receiver'   => admin_url( 'admin-ajax.php', '' ) . '?action=' . self::$name . '_xdcomm',
 					'recover_password_callback' => 'CAPTURE.closeRecoverPassword',
 				);
 				$link = $link . '?' . http_build_query( $args, '', '&' );

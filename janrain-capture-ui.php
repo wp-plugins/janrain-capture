@@ -181,7 +181,7 @@ class JanrainCaptureUi {
 	function admin_url( $url, $path, $blog_id ) {
 		$current_user = wp_get_current_user();
 		if ( $path == 'profile.php' && $current_user->ID ) {
-			return admin_url( 'admin-ajax.php' ) . '?action=' . JanrainCapture::$name . '_profile';
+			return admin_url( 'admin-ajax.php', '' ) . '?action=' . JanrainCapture::$name . '_profile';
 		} else {
 			return $url;
 		}
@@ -293,7 +293,7 @@ SHARE;
 				$method = preg_replace( '/^profile/', '', $screen );
 				$query_args['method'] = $method;
 			}
-			$recover_password_url = add_query_arg( $query_args, admin_url( 'admin-ajax.php' ) );
+			$recover_password_url = add_query_arg( $query_args, admin_url( 'admin-ajax.php', '' ) );
 			echo <<<RECOVER
 				<script type="text/javascript">
 					jQuery(function(){
@@ -336,8 +336,8 @@ BACKPLANE;
 		if ( $sso_enabled && $sso_addr ) {
 			$client_id    = JanrainCapture::get_option( JanrainCapture::$name . '_client_id' );
 			$client_id    = JanrainCapture::sanitize( $client_id );
-			$xdcomm       = admin_url( 'admin-ajax.php' ) . '?action=' . JanrainCapture::$name . '_xdcomm';
-			$redirect_uri = admin_url( 'admin-ajax.php' ) . '?action=' . JanrainCapture::$name . '_redirect_uri';
+			$xdcomm       = admin_url( 'admin-ajax.php', '' ) . '?action=' . JanrainCapture::$name . '_xdcomm';
+			$redirect_uri = admin_url( 'admin-ajax.php', '' ) . '?action=' . JanrainCapture::$name . '_redirect_uri';
 			$logout       = wp_logout_url( '/' );
 			$sso_addr     = esc_url( 'https://' . $sso_addr );
 			echo <<<SSOA
@@ -369,7 +369,7 @@ SSO;
 			}
 		}
 		echo '<script type="text/javascript">
-			if (typeof(ajaxurl) == "undefined") var ajaxurl = "' . admin_url( 'admin-ajax.php' ) . '";
+			if (typeof(ajaxurl) == "undefined") var ajaxurl = "' . admin_url( 'admin-ajax.php', '' ) . '";
 </script>';
 	}
 
@@ -381,7 +381,7 @@ SSO;
 		$folder = JanrainCapture::get_option( JanrainCapture::$name . '_widget_screen_folder' );
 
 		// capture
-		$settings['capture.redirectUri']   = admin_url( 'admin-ajax.php' ) . '?action=' . JanrainCapture::$name . '_redirect_uri';
+		$settings['capture.redirectUri']   = admin_url( 'admin-ajax.php', '' ) . '?action=' . JanrainCapture::$name . '_redirect_uri';
 		$settings['capture.appId']         = JanrainCapture::get_option( JanrainCapture::$name . '_widget_app_id' );
 		$settings['capture.clientId']      = JanrainCapture::get_option( JanrainCapture::$name . '_widget_client_id' );
 		$settings['capture.captureServer'] = JanrainCapture::get_option( JanrainCapture::$name . '_widget_address' );
