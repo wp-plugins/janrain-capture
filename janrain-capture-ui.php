@@ -41,16 +41,54 @@ class JanrainCaptureUi {
 		}
 		$this->ifolder = JanrainCapture::get_option( JanrainCapture::$name . '_widget_screen_folder' );
 
+		#validate ifolder
+		$validUrl = filter_var( $this->ifolder, FILTER_VALIDATE_URL );
+		if ( is_admin() && ( ! $validUrl ) ) {
+			#url is not valid, and we're looking at the admin screen.
+			#print message about error
+			add_action( 'admin_notices', array( $this, 'invalidScreensNotice' ) );
+			#set vars
+			$this->local = true;
+			return;
+		}
+
 		// check to see if this is a local url and fix path
 		if ( stristr( $this->ifolder, site_url() ) ) {
-			$this->ifolder = explode( '/', $this->ifolder );
-			array_pop( $this->ifolder );
-			$this->ifolder = array_pop( $this->ifolder );
-			$this->ifolder = plugin_dir_path( __FILE__ ) . '../' . $this->ifolder;
+			# screens url contains site URL, look for files locally
+			$this->ifolder = ABSPATH . str_replace( site_url() . '/', '', $this->ifolder );
 			$this->local = true;
+			// Check to make sure screens exist, and display an admin error if they do not
+			if ( is_admin() ) {
+				$signin_path = trailingslashit( $this->ifolder ) . 'signin.html';
+				if ( ! file_exists( $signin_path ) ) {
+					add_action( 'admin_notices', array( $this, 'screens_missing_notice' ) );
+				}
+			}
 		} else {
 			$this->local = false;
 		}
+	}
+
+	/**
+	 * Admin notice when the screens url is invalid.
+	 */
+	public function invalidScreensNotice() {
+		echo
+			"<div class='error'>"
+				. "<p>" . __( 'Janrain Capture: Invalid Screens URL.', 'janrain-capture' ) . "</p>"
+			."</div>";
+	}
+
+	/**
+	 * Admin notice hook to be displayed when screens are not found
+	 */
+	public function screens_missing_notice() {
+		echo
+			'<div class="error">'
+				. '<p>'
+				. __( 'Janrain Capture: Could not locate screens. Please make sure your screens folder is in the correct location.', 'janrain-capture' )
+				. '</p>'
+			.'</div>';
 	}
 
 	/**
@@ -406,7 +444,15 @@ SSO;
 
 		if ( $this->local ) {
 			// check the stylesheets folder for css files
-			$dir = new DirectoryIterator( $this->ifolder . '/stylesheets' );
+			try {
+				$dir = new DirectoryIterator( $this->ifolder . '/stylesheets' );
+			} catch (Exception $e) {
+				if ( true === WP_DEBUG ) {
+					error_log( 'janrain-capture: Could not locate screens in ' . $this->ifolder );
+				}
+				return false;
+			}
+
 			$settings['capture.stylesheets'] = '';
 			foreach ( $dir as $fileinfo ) {
 				$fn = $fileinfo->getFilename();
@@ -586,7 +632,13 @@ BACKPLANE2;
 		$url .= preg_replace('"\.(php|html|htm)$"', '.js', $file);
 		echo '<script type="text/javascript">';
 		if ( $this->local ) {
-			include_once $url;
+			if ( file_exists( $url ) ) {
+				include_once $url;
+			} else {
+				if ( true === WP_DEBUG ) {
+					error_log( 'janrain-capture: Could not find screen file at path ' . $url );
+				}
+			}
 		} else {
 			$resp = wp_remote_get( $url );
 			$out = wp_remote_retrieve_body( $resp );
@@ -599,7 +651,13 @@ BACKPLANE2;
 		$url  = $this->ifolder . '/';
 		$url .= JanrainCapture::get_option( JanrainCapture::$name . '_widget_auth_screen' );
 		if ( $this->local ) {
-			include_once $url;
+			if ( file_exists( $url ) ) {
+				include_once $url;
+			} else {
+				if ( true === WP_DEBUG ) {
+					error_log( 'janrain-capture: Could not find screen file at path ' . $url );
+				}
+			}
 		} else {
 			$resp = wp_remote_get( $url );
 			$out = wp_remote_retrieve_body( $resp );
@@ -611,7 +669,13 @@ BACKPLANE2;
 		$url  = $this->ifolder . '/';
 		$url .= JanrainCapture::get_option( JanrainCapture::$name . '_widget_edit_screen' );
 		if ( $this->local ) {
-			include_once $url;
+			if ( file_exists( $url ) ) {
+				include_once $url;
+			} else {
+				if ( true === WP_DEBUG ) {
+					error_log( 'janrain-capture: Could not find screen file at path ' . $url );
+				}
+			}
 		} else {
 			$resp = wp_remote_get( $url );
 			$out = wp_remote_retrieve_body( $resp );
@@ -625,7 +689,13 @@ BACKPLANE2;
 		$url .= preg_replace( '"\.(php|html|htm)$"', '.js', $file );
 		echo '<script type="text/javascript">';
 		if ( $this->local ) {
-			include_once $url;
+			if ( file_exists( $url ) ) {
+				include_once $url;
+			} else {
+				if ( true === WP_DEBUG ) {
+					error_log( 'janrain-capture: Could not find screen file at path ' . $url );
+				}
+			}
 		} else {
 			$resp = wp_remote_get( $url );
 			$out = wp_remote_retrieve_body( $resp );

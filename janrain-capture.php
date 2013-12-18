@@ -19,7 +19,7 @@ if ( ! class_exists( 'JanrainCapture' ) ) {
 		public $basename;
 		public $url;
 		public static $name = 'janrain_capture';
-		public static $ui;
+		public $ui;
 
 		/**
 		 * Initializes the plugin.
@@ -55,7 +55,7 @@ if ( ! class_exists( 'JanrainCapture' ) ) {
 				add_shortcode( 'janrain_share', array( $this, 'shortcode_share' ) );
 			}
 			require_once $this->path . '/janrain-capture-ui.php';
-			self::$ui = new JanrainCaptureUi();
+			$this->ui = new JanrainCaptureUi();
 		}
 
 		/**
@@ -303,7 +303,10 @@ RDIR;
 		 * displays the forgot password and email verification screens
 		 */
 		function widget_show_screen( $url_type, $code ){
-				$widget_js = $this->ui->widget_js();
+				ob_start();
+				$this->ui->widget_js();
+				$widget_js = ob_get_clean();
+
 				$screen = $this->widget_get_screen( $url_type . '.html' );
 				$js = $this->widget_get_screen( $url_type . '.js' );
 
@@ -312,8 +315,8 @@ RDIR;
 <html xmlns="http://www.w3.org/1999/xhtml" >
 <head>
 	<title>Janrain Capture</title>
+	{$widget_js}
 	<script type="text/javascript">
-		{$widget_js}
 		{$js}
 	</script>
 </head>
@@ -332,7 +335,7 @@ SCREEN;
 				echo "Janrain Capture: No Widget screens folder specified in Janrain Capture Interface settings";
 				return false;
 			}
-			$resp = wp_remote_get( $folder . $name );
+			$resp = wp_remote_get( $folder . $fname );
 			return wp_remote_retrieve_body( $resp );
 		}
 

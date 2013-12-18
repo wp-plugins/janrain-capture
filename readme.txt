@@ -4,7 +4,7 @@ Tags: capture, janrain, sso
 Requires at least: 3.5
 Tested up to: 3.7.1
 License: APL
-Stable tag: 0.2.4
+Stable tag: 0.2.5
 
 Social User Registration and Profile Storage with Janrain Capture
 

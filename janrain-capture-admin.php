@@ -692,13 +692,15 @@ FOOTER;
 			$value = "WPError: {$value->get_error_message()}";
 		}
 
+		$prefix = array_key_exists('prefix', $field) ? $field['prefix'] : '';
+
 		switch ( $field['type'] ) {
 			case 'text':
 				echo <<<TEXT
 				<tr>
 					<th><label for="{$field['name']}">{$field['title']}$r</label></th>
 					<td>
-						{$field['prefix']}<input type="text" name="{$field['name']}" value="$value" style="width:200px" />
+						{$prefix}<input type="text" name="{$field['name']}" value="$value" style="width:200px" />
 						<span class="description">{$field['description']}</span>
 					</td>
 				</tr>
