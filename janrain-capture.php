@@ -3,7 +3,7 @@
 Plugin Name: Janrain Capture
 Plugin URI: http://janrain.com/capture/
 Description: Collect, store and leverage user profile data from social networks in a flexible, lightweight hosted database.
-Version: 0.2.4
+Version: 0.2.6
 Author: Janrain
 Author URI: http://developers.janrain.com/extensions/wordpress-for-capture/
 License: Apache License, Version 2.0
@@ -184,47 +184,48 @@ if ( ! class_exists( 'JanrainCapture' ) ) {
 				}
 			}
 			if ( $origin != '' ) {
-				$r = "'" . esc_url( $origin ) . "'";
+				$r = esc_url( $origin );
 			} else {
 				$r = 'window.top.location.href';
 			}
 
 			$ui_type = self::get_option( self::$name . '_ui_type' );
 			echo <<<HTML
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-	 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" >
-	<head>
-		<title>Janrain Capture</title>
-	</head>
-	<body>
-		<script type="text/javascript">
-			if( '{$ui_type}' === 'Capture') {
-				if(localStorage) localStorage.setItem("janrainCaptureTokenWP", '$api->access_token')
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<title>Janrain Capture</title>
+</head>
+<body>
+	<script type="text/javascript">
+		if ('Capture' === '{$ui_type}') {
+			if (localStorage) {
+				localStorage.setItem("janrainCaptureTokenWP", '$api->access_token');
+			}
 			// User Registration Widget flow
-				if ('$r' == 'window.top.location.href') {
+			if ('window.top.location.href' == '$r') {
 				// redirect to the originating page
-					if (document.referrer) {
+				if (document.referrer) {
 					// redirect to the document.referrer
-						window.top.location = document.referrer;
-					} else {
-					// some IE browsers don't pass document.referrer so use history
-						window.top.history.go(-1);
-					}
+					window.top.location = document.referrer;
 				} else {
-				 // redirect to page passed as origin querystring param
-					window.top.location.href = $r;
+					// some IE browsers don't pass document.referrer so use history
+					window.top.history.go(-1);
 				}
 			} else {
-			// Legacy Capture UI flow
-	if(window.top.CAPTURE && window.top.CAPTURE.closeAuth) {
-		window.top.CAPTURE.closeAuth();
-	} else {
-		window.top.location.href = $r;
-	}
+				 // redirect to page passed as origin querystring param
+				window.top.location.href = '$r';
 			}
-		</script>
-	</body>
+		} else {
+			// Legacy Capture UI flow
+			if (window.top.CAPTURE && window.top.CAPTURE.closeAuth) {
+				window.top.CAPTURE.closeAuth();
+			} else {
+				window.top.location.href = '$r';
+			}
+		}
+	</script>
+</body>
 </html>
 HTML;
 			die();

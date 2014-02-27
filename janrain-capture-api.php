@@ -49,6 +49,7 @@ class JanrainCaptureAPI {
 	protected function call( $command, $arg_array = null, $access_token = null ) {
 		$url = $this->capture_addr . "/$command";
 		$headers = array();
+		$headers['User-Agent'] = 'WordPress/janrain_capture-' . JanrainCapture::get_plugin_version();
 		if ( isset( $access_token ) ) {
 			$headers['Authorization'] = "OAuth $access_token";
 		}

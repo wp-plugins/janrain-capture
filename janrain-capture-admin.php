@@ -310,7 +310,7 @@ class JanrainCaptureAdmin {
 				'screen' => 'widget',
 			),
 			array(
-				'name' => JanrainCapture::$name . '_widget_bp_version',
+				'name' => JanrainCapture::$name . '_bp_version',
 				'title' => 'Backplane Version',
 				'description' => 'Choose from Backplane Version 1.2 or 2.0',
 				'type' => 'select',
