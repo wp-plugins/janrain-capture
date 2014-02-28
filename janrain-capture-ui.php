@@ -438,7 +438,7 @@ SSO;
 
 		// backplane
 		$settings['capture.backplane']        = JanrainCapture::get_option( JanrainCapture::$name . '_widget_backplane_enabled' );
-		$settings['capture.backplaneServerBaseUrl'] = JanrainCapture::get_option( JanrainCapture::$name . '_widget_backplane_server_base_url' );
+		$settings['capture.backplaneServerBaseUrl'] = JanrainCapture::get_option( JanrainCapture::$name . '_widget_bp_server_base_url' );
 		$settings['capture.backplaneBusName'] = JanrainCapture::get_option( JanrainCapture::$name . '_widget_bp_bus_name' );
 		$settings['capture.backplaneVersion'] = JanrainCapture::get_option( JanrainCapture::$name . '_bp_version' );
 
@@ -530,11 +530,10 @@ WIDGETCAPTURE;
 
 		if ( $settings['capture.backplane'] ) {
 			?>
-			//backplane settings
+			// backplane settings
 			janrain.settings.capture.backplane = '<?php echo $settings['capture.backplane'] ?>';
 			janrain.settings.capture.backplaneBusName = '<?php echo $settings['capture.backplaneBusName'] ?>';
-			// channel expires
-			// version
+			janrain.settings.capture.backplaneVersion = '<?php echo $settings['capture.backplaneVersion']?>';
 			<?php
 		}
 
