@@ -47,7 +47,7 @@ Map Janrain customer profile fields to Drupal user fields.
 
 == Installation ==
 
-For detailed installation documentation, refer to (http://developers.janrain.com/how-to/registration/implementation-steps/)[http://developers.janrain.com/how-to/registration/implementation-steps/]
+For detailed installation documentation, refer to [http://developers.janrain.com/how-to/registration/implementation-steps/](http://developers.janrain.com/how-to/registration/implementation-steps/)
 
 1. Install through the Administration Panel or extract plugin archive in your plugin directory.
 
@@ -55,24 +55,24 @@ For detailed installation documentation, refer to (http://developers.janrain.com
 
 3. Select the Janrain Capture menu item from the Administration menu to enter your Janrain Registration configuration details. Individual settings will be provided by your Janrain technical lead.
 
-* Engage Application URL
-* Enable Social Sharing (if desired)
-* Override Native Links
-* UI Type
+    * Engage Application URL
+    * Enable Social Sharing (if desired)
+    * Override Native Links
+    * UI Type
 
 4. Select Janrain Capture > Capture Settings from the Administration menu to enter your Janrain Registration configuration details. Individual settings will be provided by your Janrain technical lead.
 
-* Application URL
-* Application ID
-* API Client ID
-* API Client Secret
+    * Application URL
+    * Application ID
+    * API Client ID
+    * API Client Secret
 
 5. If applicable, configure Federate and Backplane settings. Individual settings will be provided by your Janrain technical lead.
 
 6. Select Janrain Capture > Interface Settings from the Administration menu to enter your Janrain Registration configuration details. Individual settings will be provided by your Janrain technical lead.
 
-* URL for load.js file
-* Screens Folder
+    * URL for load.js file
+    * Screens Folder
 
 == Short Codes ==
 To insert Janrain Registration links in posts or pages use the shortcode: [janrain_capture]
