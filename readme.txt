@@ -1,55 +1,83 @@
-=== Janrain Capture ===
-Contributors: byron-janrain, rebekahgolden, kylerohr
+=== Janrain Registration ===
+Contributors: byron-janrain, rebekahgolden
 Tags: capture, janrain, sso
 Requires at least: 3.5
 Tested up to: 3.7.1
 License: APL
 Stable tag: 0.2.6
 
-Social User Registration and Profile Storage with Janrain Capture
+Janrain Registration and Customer Profile Data Storage
 
 == Description ==
 
-Janrain Capture provides hosted registration and authentication with social identity providers including Facebook, Google, Yahoo!, OpenID, LinkedIn, eBay, Twitter and many others or through traditional form field methods. Capture also includes a cloud-hosted registration and authentication system that allows site owners to maintain a central repository for user information, that can be deployed on one or more web sites.  Automatically store social profile data from social login and registration, site-specific data, off-line and 3rd-party data, as well as legacy data. Build a unified view on users by uniting this user information, normally distributed across disparate databases, mobile sites and apps, web properties and vendor systems such as email marketing, subscription billing or CRM to build a 360 degree view of users.
-This module greatly accelerates the time required to implement Janrain Capture into your WordPress web sites, helping to improve your registration conversion rates by allowing your customers to register and sign-in using their prefered identities.
-Janrain Capture’s registration and social profile database features include:
+Janrain makes it easy to know your customers and personalize every interaction. Our Customer Profile Management Platform helps companies build a unified view of their customers across all devices by collecting accurate customer profile data to power personalized marketing. The platform encompasses social login, registration, customer profile data storage, customer insights, single sign-on, and user-generated content.
 
-**Social login and registration**
-In a study conducted by Blue research, Janrain found that 86% of users are very likely to leave a site when prompted to create a new traditional account (username and password). Janrain Capture eliminates the need for a new username and password by authenticating users with existing 3rd party and social identities like Facebook, Google, Yahoo!, LinkedIn, Twitter, etc. Janrain also found that 42% of users prefer to use Facebook for social registration. However, with support for more than 20 identity providers, customers can meet the needs of the remain 58% of new users.
-**Pre-populated forms**
-88% of users admit to providing false registration info. Capture seamlessly pre-fills registration fields to streamline registration for users and provide customers with highly accurate, rich social profile data.
-**Traditional account support and mapping**
-Capture supports existing accounts with side-by-side social and traditional logins as well as the option for customers to offer traditional accounts to new users. Account mapping allows users to map a 3rd party identity to their legacy account resulting in a one-click return login experience for users and rich social profile data for customers.
-**Personalized, one-click return experience**
-Capture personalizes and simplifies the user’s return experience by welcoming the user back by name and prompting them to login with their previously chosen identity provider for a one-click return login.
-**Email verification and in-line form field validation**
-Capture features an email verification flow to ensure that all user profiles contain an active email account. In-line form field validation further improves the quality of user profile data with field format rules and unique username availability and suggestions.
-**Rich customization options**
-Capture registration enables customers to match registration screens to their site’s look and feel via CSS and API. Registration forms can configured to collect any definable field for storage in the Capture database and with conditional, progressive, and multi-forms, users see highly relevant registration screens based on user origin, activity, site, etc.
-**Self-service account management**
-Capture provides users and customers alike with reliable, self-service features for password reset and account deactivation or deletion. In addition, users can access a profile management form to add additional identity providers, update their user profile, or change their on-site privacy settings.
+This plugin accelerates the deployment of Janrain Registration on your WordPress site. This plugin requires a Janrain Registration account.
 
-=Advanced Registration Features=
-In addition, Capture supports websites with advanced features for sites and users:
-* TOS acceptance or subscription opt-in
-* CAPTCHA verification
-* Dirty word filter
-* Mobile optimizations and SDKs for native applications
-* Event hooks for 3rd party analytics
+Janrain Registration is a customizable registration and profile system that offers  default screens and workflows to optimize the user experience around sign-up and improve data quality. Registration includes in-line field verification, email confirmation, password reset, and other advanced registration features.
 
-[About Janrain Capture](http://janrain.com/products/capture/)
+Janrain Registration was previously named Janrain Capture. The plugin UI references this legacy name.
 
-For technical documentation please refer to
-(http://developers.janrain.com/documentation/capture/)[http://developers.janrain.com/documentation/capture/]
+[About Janrain Registration](http://developers.janrain.com/overview/registration/registration-overview/)
+
+#### Customizable Registration & Data Collection Forms
+Easily add registration and data collection forms that can be customized and styled to match the look and feel of your site, and implemented across a range of customer touch points, from promotions to campaigns and subscriptions.
+
+#### Mobile Optimized Registration Screens
+Leverage our registration SDK's for your mobile app and automatic device detection and screen optimization for the mobile web.
+
+#### Real-Time Field Validation
+Use real-time validation on form fields, bad word filters, and terms of service and privacy policy acceptance.
+
+#### Conditional Workflows
+Dynamically trigger form fields or distinct user flows based on inputs to previous fields or existing data already stored about a customer.
+
+#### Email Confirmation & Password Reset Flows
+Deliver account confirmation and password reset emails straight to your customer’s inbox, and let Janrain securely handle password management and reset flows on your behalf.
+
+#### Account Linking
+Let your customers link social identities to their existing account on your website.
+
+#### Profile Pages
+Offer profile pages that include name, email, demographics, photos, subscription preferences and more.
+
+#### Data Mapping
+Map Janrain customer profile fields to Drupal user fields.
+
 
 == Installation ==
-Install through the Administration Panel or extract plugin archive in your plugin directory.
 
-Once installed, visit the Janrain Capture menu item in the Administration Panel to enter your Janrain Capture configuration details. At a minimum, you will need to enter an Application Domain, API Client ID, and API Client Secret.
+For detailed installation documentation, refer to (http://developers.janrain.com/how-to/registration/implementation-steps/)[http://developers.janrain.com/how-to/registration/implementation-steps/]
 
-To insert Capture links in posts or pages you can use the shortcode: [janrain_capture]
+1. Install through the Administration Panel or extract plugin archive in your plugin directory.
 
-By default, [janrain_capture] will result in a link with the text "Sign in / Register" that will launch a modal window pointing to your Capture signin screen. You can customize the text, action, and starting width/height of the modal window by passing in additional attributes. The following is an example of a link to the legacy_register screen with a height of 800px and a width of 600px:
+2. Copy the default screens folder from /wp-content/janrain-capture/janrain-capture-screens to /wp-content/plugins/janrain-capture-screens. Your Janrain technical lead will provide you with your customized screens files.
+
+3. Select the Janrain Capture menu item from the Administration menu to enter your Janrain Registration configuration details. Individual settings will be provided by your Janrain technical lead.
+
+* Engage Application URL
+* Enable Social Sharing (if desired)
+* Override Native Links
+* UI Type
+
+4. Select Janrain Capture > Capture Settings from the Administration menu to enter your Janrain Registration configuration details. Individual settings will be provided by your Janrain technical lead.
+
+* Application URL
+* Application ID
+* API Client ID
+* API Client Secret
+
+5. If applicable, configure Federate and Backplane settings. Individual settings will be provided by your Janrain technical lead.
+
+6. Select Janrain Capture > Interface Settings from the Administration menu to enter your Janrain Registration configuration details. Individual settings will be provided by your Janrain technical lead.
+
+* URL for load.js file
+* Screens Folder
+
+== Short Codes ==
+To insert Janrain Registration links in posts or pages use the shortcode: [janrain_capture]
+
+By default, [janrain_capture] will result in a link with the text "Sign in / Register" that will launch a modal window pointing to your Registration signin screen. You can customize the text, action, and starting width/height of the modal window by passing in additional attributes. The following is an example of a link to the legacy_register screen with a height of 800px and a width of 600px:
 
 [janrain_capture text="Register" action="legacy_register" width="600" height="800"]
 
@@ -57,7 +85,7 @@ You can prevent the construction of the link and simply return the URL to the sc
 
 To insert links in your theme templates you can use the [do_shortcode](http://codex.wordpress.org/Function_Reference/do_shortcode) WordPress function.
 
-As of version 0.0.4 this plugin now supports Engage Social Sharing via the Engage app configured for Capture. To use this feature, ensure 'Enable Social Sharing' is checked in the UI Options administration page and use the [janrain_share] shortcode. If the $post object is available the title, description, URL, and the most recent attached image URL will automatically be determined for sharing. These variables, as well as the button text, can be overridden with the following shortcode attributes:
+This plugin supports Janrain Social Sharing v2 via the Social Login (Engage) application configured for your account. To use this feature, ensure 'Enable Social Sharing' is checked in the UI Options administration page and use the [janrain_share] shortcode. If the $post object is available the title, description, URL, and the most recent attached image URL will automatically be determined for sharing. These variables, as well as the button text, can be overridden with the following shortcode attributes:
 
 * title
 * description
