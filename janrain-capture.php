@@ -3,11 +3,34 @@
 Plugin Name: Janrain Capture
 Plugin URI: http://janrain.com/capture/
 Description: Collect, store and leverage user profile data from social networks in a flexible, lightweight hosted database.
-Version: 0.2.6
+Version: 0.2.7
 Author: Janrain
 Author URI: http://developers.janrain.com/extensions/wordpress-for-capture/
 License: Apache License, Version 2.0
 */
+
+// Handle sessions for logged out users cause wtf wp.
+add_action('init', function () {if ( ! session_id() ) session_start();}, 1);
+add_action('wp_logout', function () {session_destroy();});
+add_action('wp_login', function () {session_destroy();});
+
+// If SSO is turned on, relax the security on the logoutURL so SSO can log you out.
+if ( get_option( 'janrain_capture_widget_sso_enabled' ) ) {
+	// SSO enabled, enable remote logouts
+	add_action( 'login_form_logout', function () {
+		// check for sso
+		if ( empty( $_REQUEST['_janrainsso'] ) ) {
+			// no sso, let normal wp happen.
+			return;
+		}
+		// Allow sso to load in iframe.
+		header_remove( 'X-Frame-Options' );
+		// logout user
+		wp_logout();
+		// hard stop wp
+		exit;
+	});
+}
 
 if ( ! class_exists( 'JanrainCapture' ) ) {
 	/**
@@ -102,7 +125,12 @@ if ( ! class_exists( 'JanrainCapture' ) ) {
 				$redirect_args['origin'] = $origin;
 			}
 
-			$redirect_uri = admin_url( 'admin-ajax.php', '' ) . '?' . http_build_query( $redirect_args, '', '&' );
+			// WebView is in play, use the redirect_uri from the session.
+			if ( JanrainCapture::get_option( 'janrain_capture_ui_web_view' ) ) {
+				$redirect_uri = $_SESSION['janrain_capture_redirect_uri'];
+			} else {
+				$redirect_uri = admin_url( 'admin-ajax.php', '' ) . '?' . http_build_query( $redirect_args, '', '&' );
+			}
 			$api = new JanrainCaptureApi();
 			if ( $api->new_access_token( $code, $redirect_uri ) ) {
 				$user_entity = $api->load_user_entity();
@@ -122,7 +150,7 @@ if ( ! class_exists( 'JanrainCapture' ) ) {
 					if ( count( $exists ) < 1 ) {
 						#pretty sure no wordpress user for this capture user so lets make one!
 						$user_attrs = array();
-						$user_attrs['user_pass'] = wp_generate_password( $length = 12, $include_standard_special_chars = false );
+						$user_attrs['user_pass'] = wp_generate_password( $length = 12, $include_standard_special_chars = true );
 						if ( self::get_option( self::$name . '_user_email' ) ) {
 							$user_attrs['user_email'] = esc_sql( $this->get_field( self::get_option( self::$name . '_user_email' ), $user_entity ) );
 						}
@@ -151,13 +179,14 @@ if ( ! class_exists( 'JanrainCapture' ) ) {
 						if ( is_multisite() ) {
 							add_user_to_blog( 1, $user_id, 'subscriber' );
 						}
+						do_action( 'wp_login', $user->user_login, $user );
+						do_action( 'janrain_capture_user_logged_in' , $user_id );
 					} else {
 						#a wordpress user exists for this capture user lets update the profile data!
 						$user    = $exists[0];
 						$user_id = $user->ID;
-						if ( $user_id && $user_id != 0 ) {
-							do_action( self :: $name . '_user_logged_in' , $user_id );
-						}
+						do_action('wp_login', $user->user_login, $user);
+						do_action( 'janrain_capture_user_logged_in' , $user_id );
 						#do not update administrators
 						if ( ! $this->update_user_data( $user_id, $user_entity ) ) {
 							throw new Exception( 'Janrain Capture: Failed to update user data' );

@@ -442,6 +442,9 @@ SSO;
 		$settings['capture.backplaneBusName'] = JanrainCapture::get_option( JanrainCapture::$name . '_widget_bp_bus_name' );
 		$settings['capture.backplaneVersion'] = JanrainCapture::get_option( JanrainCapture::$name . '_bp_version' );
 
+		// mobile
+		$settings['mobileWebView'] = JanrainCapture::get_option( JanrainCapture::$name . '_ui_web_view' );
+
 		if ( $this->local ) {
 			// check the stylesheets folder for css files
 			try {
@@ -480,7 +483,8 @@ SSO;
 			//default
 			$settings['capture.stylesheets'] = "'{$this->ifolder}/stylesheets/janrain.css'";
 		}
-
+		// Convert locale to RFC-5646
+		$locale = esc_js(str_replace('_', '-', get_locale()));
 		echo <<<WIDGETCAPTURE
 <script type="text/javascript">
 function janrainSignOut(){
@@ -492,6 +496,7 @@ function janrainSignOut(){
 		window.janrain.settings.capture = {};
 
 		// capture settings
+		janrain.settings.capture.language = '$locale';
 		janrain.settings.capture.redirectUri = '{$settings["capture.redirectUri"]}';
 		janrain.settings.capture.appId= '{$settings["capture.appId"]}';
 		janrain.settings.capture.clientId = '{$settings["capture.clientId"]}';
@@ -521,8 +526,11 @@ WIDGETCAPTURE;
 		echo "\njanrain.settings.capture.recaptchaPublicKey = '6LeVKb4SAAAAAGv-hg5i6gtiOV4XrLuCDsJOnYoP'; //captcha";
 
 		if ( in_array( 'login', $settings['capture.packages'] ) ) {
+			// convert locale to RFC-5646
+			$locale = esc_js(str_replace('_', '-', get_locale()));
 			?>
 			// engage settings
+			janrain.settings.language = '<?php echo $locale;?>';
 			janrain.settings.appUrl = '<?php echo $settings['appUrl'] ?>';
 			janrain.settings.tokenAction = 'event';
 			<?php
@@ -544,13 +552,31 @@ WIDGETCAPTURE;
 		}
 
 		if ( $settings['capture.federate'] ) {
+			$logoutUrl = $settings['capture.federateLogoutUri'] ?: wp_logout_url() . '&_janrainsso=1';
 			?>
 			// federate settings
 			janrain.settings.capture.federate = '<?php echo $settings['capture.federate'] ?>';
 			janrain.settings.capture.federateServer = '<?php echo $settings['capture.federateServer'] ?>';
 			janrain.settings.capture.federateXdReceiver = '<?php echo $settings['capture.federateXdReceiver'] ?>';
-			janrain.settings.capture.federateLogoutUri = '<?php echo $settings['capture.federateLogoutUri'] ?>';
+			janrain.settings.capture.federateLogoutUri = '<?php echo $logoutUrl;?>';
 			<?php
+		}
+
+		if ( $settings['mobileWebView'] ) {
+
+			$_SESSION['janrain_capture_redirect_uri'] = $this->current_page_url();
+
+			echo "
+			// mobile-specific settings
+			janrain.settings.tokenAction = 'url';
+			janrain.settings.popup = false;
+			janrain.settings.tokenUrl = janrain.settings.capture.captureServer;
+			janrain.settings.capture.redirectFlow = true;
+			janrain.settings.capture.redirectUri = '{$_SESSION['janrain_capture_redirect_uri']}';\n";
+		} else {
+			if ( isset( $_SESSION['janrain_capture_redirect_uri'] ) ) {
+				unset( $_SESSION['janrain_capture_redirect_uri'] );
+			}
 		}
 
 		echo <<<WIDGETFINISH

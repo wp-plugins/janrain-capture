@@ -48,6 +48,14 @@ class JanrainCaptureAdmin {
 				'screen' => 'main',
 			),
 			array(
+				'name' => JanrainCapture::$name . '_ui_web_view',
+				'title' => 'Support for Mobile WebView',
+				'description' => 'The default Janrain login UI uses popups, which are not supported in mobile WebView. Check this box to change the Janrain login to appear in embedded mode which will support mobile WebView.',
+				'default' => '0',
+				'type' => 'checkbox',
+				'screen' => 'main',
+			),
+			array(
 				'name' => JanrainCapture::$name . '_ui_type',
 				'title' => 'UI Type',
 				'description' => 'Choose from Capture, Capture Legacy, or None if you plan to build your own.',
@@ -110,7 +118,7 @@ class JanrainCaptureAdmin {
 			array(
 				'name' => JanrainCapture::$name . '_sso_address',
 				'title' => 'SSO Application Domain',
-				'description' => 'Your Janrain Federate SSO domain <br/>(example: demo.janrainsso.com)',
+				'description' => 'Your Janrain Federate SSO domain <br/>(example: https://demo.janrainsso.com)',
 				'default' => '',
 				'type' => 'text',
 				'screen' => 'options',
@@ -257,7 +265,7 @@ class JanrainCaptureAdmin {
 			array(
 				'name' => JanrainCapture::$name . '_widget_sso_address',
 				'title' => 'Application Domain',
-				'description' => 'Your Janrain Federate SSO domain <br/>(example: demo.janrainsso.com)',
+				'description' => 'Your Janrain Federate SSO domain <br/>(example: https://demo.janrainsso.com)',
 				'default' => '',
 				'type' => 'text',
 				'screen' => 'widget',
@@ -265,16 +273,16 @@ class JanrainCaptureAdmin {
 			array(
 				'name' => JanrainCapture::$name . '_widget_so_xd',
 				'title' => 'Cross-Domain Reciever Page',
-				'description' => "Your Janrain Federate XD Reciever url <br/>(example: $site_url/xdcomm.html)",
-				'default' => 'xdcomm.html',
+				'description' => "Your Janrain Federate XD Reciever url <br/>(example: $site_url/wp-admin/admin-ajax.php?action=janrain_capture_xdcomm)",
+				'default' => "{$site_url}/wp-admin/admin-ajax.php?action=janrain_capture_xdcomm",
 				'type' => 'text',
 				'screen' => 'widget',
 			),
 			array(
 				'name' => JanrainCapture::$name . '_widget_sso_logout',
 				'title' => 'Federate Logout Page',
-				'description' => "Your Janrain Federate Logout url <br/>(example: $site_url/logout.html)",
-				'default' => '',
+				'description' => "Your Janrain Federate Logout url.<br/>Leave blank or enter the full url of your customized WordPress logout page.",
+				'default' => "",
 				'type' => 'text',
 				'screen' => 'widget',
 			),

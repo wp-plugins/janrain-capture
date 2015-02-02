@@ -4,11 +4,11 @@ janrain.settings.width = 310;
 
 // call our code/token exchanger, and use the token to set up a capture session
 function getTokenForCode(code, redirect_uri) {
-	  var url;
-		url = janrain.settings.capture.redirectUri;
-		url += "&code=" + code;
-		window.location.href = url;
+	var url = '/wp-admin/admin-ajax.php?action=janrain_capture_redirect_uri';
+	url += "&code=" + code;
+	window.location.href = url;
 }
+
 function janrainReturnExperience() {
 	var span = document.getElementById('traditionalWelcomeName');
 	var name = janrain.capture.ui.getReturnExperienceData("displayName");

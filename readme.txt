@@ -2,9 +2,9 @@
 Contributors: byron-janrain, rebekahgolden
 Tags: capture, janrain, sso
 Requires at least: 3.5
-Tested up to: 3.7.1
+Tested up to: 4.0.1
 License: APL
-Stable tag: 0.2.6
+Stable tag: 0.2.7
 
 Janrain Registration and Customer Profile Data Storage
 
