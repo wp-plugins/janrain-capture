@@ -2,7 +2,7 @@
 Contributors: byron-janrain, rebekahgolden
 Tags: capture, janrain, sso
 Requires at least: 3.5
-Tested up to: 4.0.1
+Tested up to: 4.1
 License: APL
 Stable tag: 0.2.7
 
